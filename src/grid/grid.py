@@ -12,6 +12,8 @@ import random
 
 import heapq as _heapq
 
+import itertools
+
 from pymunk import Vec2d
 
 from abc import ABC
@@ -628,7 +630,8 @@ class Grid(AbstractGrid, ABC):
         return shaped_path
 
     def generate_realistic_river(self, start_cell: Cell, end_cell: Cell):
-        path = self.get_path(start_cell, end_cell)
+        paths = self.get_river_bends(start_cell, end_cell)
+        path = list(itertools.chain.from_iterable(paths))
         if path is not None:
             expanded_path = self.expand_river_path(path)
 #            shaped_path = self.shape_river_path(expanded_path)
@@ -648,7 +651,7 @@ class Grid(AbstractGrid, ABC):
         else:
             print("No path found between the start and end cells.")
 
-    def get_river_ends(self, coastal_cells, length = 25):
+    def get_river_ends(self, coastal_cells, length = 50):
         """
         Randomly chooses and returns a cell to use as the mouth of a river.
 
@@ -664,12 +667,68 @@ class Grid(AbstractGrid, ABC):
             end = self.random_cell(attr=("passable", True))
         return start.designation, end.designation
         
+    def get_river_bends(self, start, end):
+        """
+        Finds several paths between the ends of river and returns them in a list.
+        
+        Args:
+            start: Cell that is the mouth of a river.
+            end: Cell that is the end of a river.
+            
+        Returns:
+            List of paths between the ends of a river.
+        """
+        if self.get_direction(start, end) in ['NE', 'E', 'SE']:
+            paths = []
+            path_count = self.get_distance(start, end, 'cells')// 10
+            for _ in range(path_count):
+                bend = self.random_cell(attr=('passable', True))
+                while self.get_direction(end, bend) not in ['NW', 'W', 'SW']:
+                    bend = self.random_cell(attr=('passable', True))
+                if not paths:
+                    paths.append(self.get_path(start, bend))
+                else:
+                    paths.append(self.get_path(paths[-1][-1], bend))
+            paths.append(self.get_path(paths[-1][-1], end))
+            return paths
+        elif self.get_direction(start, end) in ['SW', 'W', 'NW']:
+            paths = []
+            path_count = self.get_distance(start, end, 'cells')// 10
+            for _ in range(path_count):
+                bend = self.random_cell(attr=('passable', True))
+                while self.get_direction(end, bend) not in ['NE', 'E', 'SE']:
+                    bend = self.random_cell(attr=('passable', True))
+                if not paths:
+                    paths.append(self.get_path(start, bend))
+                else:
+                    paths.append(self.get_path(paths[-1][-1], bend))
+            paths.append(self.get_path(paths[-1][-1], end))
+            return paths
+        elif self.get_direction(start, end) in ['N', 'S']:
+            paths = []
+            path_count = self.get_distance(start, end, 'cells')// 10
+            for _ in range(path_count):
+                bend = self.random_cell(attr=('passable', True))
+                while self.get_direction(end, bend) not in ['NE', 'E', 'SE', 'SW', 'W', 'NW']:
+                    bend = self.random_cell(attr=('passable', True))
+                if not paths:
+                    paths.append(self.get_path(start, bend))
+                else:
+                    paths.append(self.get_path(paths[-1][-1], bend))
+            paths.append(self.get_path(paths[-1][-1], end))
+            return paths
+    
     def set_rivers(self, river_count):
         for _ in range(river_count):
+            print('finding landmass cells')
             landmass_cells = self.find_landmass_cells(self.random_cell(attr=('passable', True)))
+            print('finding coastal cells')
             coastal_cells = self.find_coastal_cells(landmass_cells)
+            print('getting river ends')
             start, end = self.get_river_ends(coastal_cells)
-            self.generate_realistic_river(start, end)            
+            print('bending river')
+            self.generate_realistic_river(start, end)
+            print('done')            
     # Define the _heuristic function
 
     def _heuristic(self, cella, cellb):
