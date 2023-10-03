@@ -1,29 +1,42 @@
 from __future__ import annotations
-import pickle
-import heapq as _heapq
-import logging 
-from abc import abstractmethod, ABC
-from random import choice as _choice
-import random
-from typing import Optional as _Optional, Union as _Union
-from uuid import uuid4
 
-import pyglet.event
-from pymunk import Vec2d as V2
+from .cell import *
+
+from .blueprint import *
 
 from .quiet_dict import QuietDict as _QuietDict
-from .grid_group import GridGroup
-from .blueprint import *
-from .cell import *
+
+import pickle
+
+import random
+
+import heapq as _heapq
+
+from pymunk import Vec2d
+
+from abc import ABC
+
+from uuid import uuid4
 
 from subprocess import call
 
 from collections import deque
 
+from random import choice as _choice
+
+from typing import Optional as _Optional, Union as _Union
+
+DODGER_BLUE = (16, 78, 139, 255)
+
+saves_dir = '/devel/fresh/envs/project/src/grid/saves/'
+
+DIRECTIONS = {'N': 'up', 'NE': 'up_right', 'E': 'right', 'SE': 'down_right', 'S': 'down', 'SW': 'down_left', 'W': 'left', 'NW': 'up_left'}
+
 def clear():
     call('clear')
 
 def get_vector_direction(pointa, pointb):
+    pointa, pointb = Vec2d(pointa[0], pointa[1]), Vec2d(pointb[0], pointb[1])
     angle_degrees = (pointb - pointa).angle_degrees
     angle_degrees = int(angle_degrees)
     angle_degrees %= 360
@@ -49,39 +62,212 @@ def get_vector_direction(pointa, pointb):
 
 def save_grid(grid: Grid):
     import os
-    if not os.path.exists('saves'):
-        os.makedirs('saves')
-    if not os.path.exists('saves/grids'):
-        os.makedirs('saves/grids')
-    if not os.path.exists(f'saves/grids/{grid.grid_id}'):
-        os.makedirs(f'saves/grids/{grid.grid_id}')
-        
-    grid_copy = grid.__class__(
-        scene=None,
-        blueprint=None,
-        cell_size=grid.cell_size,
-        dimensions=None,
-        noise_scale=None,
-        noise_octaves=None,
-        noise_roughness=None
-    )
-    grid_copy.update(grid)
-    with open(f'saves/grids/{grid.grid_id}/grid.{grid.grid_id[-5:]}.pkl', 'wb') as f:
-        return pickle.dump(grid_copy, f)
+    os.chdir(f'{saves_dir}')
+    if not os.path.exists(f'{grid.grid_id[-5:]}'):
+        os.makedirs(f'{grid.grid_id[-5:]}')
+            
+    with open(f'{grid.grid_id[-5:]}/grid.{grid.grid_id[-5:]}.pkl', 'wb') as f:
+        pickle.dump(grid, f)
         
 def load_grid(num: int):
     import os
-    save_dir = f'saves/grids/{os.listdir("saves/grids")[num]}'
+    os.chdir(f'{saves_dir}')
+    save_dir = f'{os.listdir(".")[num]}'
     with open(f'{save_dir}/grid.{save_dir[-5:]}.pkl', 'rb') as f:
         return pickle.load(f)
 
 class Cells(_QuietDict):
     pass
 
-class Grid(_QuietDict, ABC):
+class AbstractGrid(_QuietDict, ABC):
+    _grid_id = None
+    _gen_terrain = None
+    _blueprint = None
+    _grid_array = None
+    _dictTerrain = None
+    _grid_plan = None
+    _init_cell_size = None
+    _cell_size = None
+    _cells = None
+    _rows = None
+    _cols = None
+    _quadrants = None
+    _first_col = None
+    _last_col = None
+    _first_row = None
+    _last_row = None
+    _selection = None
+    
+    def __init__(self, blueprint = None, cell_size = None, dimensions = None, noise_scale = None, noise_octaves = None, noise_roughness = None):
+        super(AbstractGrid, self).__init__()
+    
+    @property
+    def grid_id(self):
+        return self._grid_id
+    
+    @grid_id.setter
+    def grid_id(self, value):
+        self._grid_id = value
+        
+    @property
+    def gen_terrain(self):
+        return self._gen_terrain
+    
+    @gen_terrain.setter
+    def gen_terrain(self, value):
+        self._gen_terrain = value
+        
+    @property
+    def blueprint(self):
+        return self._blueprint
+    
+    @blueprint.setter
+    def blueprint(self, value):
+        self._blueprint = value
+        
+    @property
+    def grid_array(self):
+        return self._grid_array
+    
+    @grid_array.setter
+    def grid_array(self, value):
+        self._grid_array = value
+        
+    @property
+    def dictTerrain(self):
+        return self._dictTerrain
+    
+    @dictTerrain.setter
+    def dictTerrain(self, value):
+        self._dictTerrain = value
+        
+    @property
+    def grid_plan(self):
+        return self._grid_plan
+    
+    @grid_plan.setter
+    def grid_plan(self, value):
+        self._grid_plan = value
+        
+    @property
+    def init_cell_size(self):
+        return self._init_cell_size
+    
+    @init_cell_size.setter
+    def init_cell_size(self, value):
+        self._init_cell_size = value
+        
+    @property
+    def cell_size(self):
+        return self._cell_size
+    
+    @cell_size.setter
+    def cell_size(self, value):
+        self._cell_size = value
+        
+    @property
+    def cells(self):
+        return self._cells
+    
+    @cells.setter
+    def cells(self, value):
+        self._cells = value
+        
+    @property
+    def rows(self):
+        return self._rows
+    
+    @rows.setter
+    def rows(self, value):
+        self._rows = value
+        
+    @rows.deleter
+    def rows(self):
+        del self._rows
+        
+    @property
+    def cols(self):
+        return self._cols
+    
+    @cols.setter
+    def cols(self, value):
+        self._cols = value
+        
+    @cols.deleter
+    def cols(self):
+        del self._cols
+        
+    @property
+    def quadrants(self):
+        return self._quadrants
+    
+    @quadrants.setter
+    def quadrants(self, value):
+        self._quadrants = value
+
+    @quadrants.deleter
+    def quadrants(self):
+        del self._quadrants
+
+    @property
+    def first_col(self):
+        return self._first_col
+    
+    @first_col.setter
+    def first_col(self, value):
+        self._first_col = value
+    
+    @first_col.deleter
+    def first_col(self):
+        del self._first_col
+        
+    @property
+    def last_col(self):
+        return self._last_col
+    
+    @last_col.setter
+    def last_col(self, value):
+        self._last_col = value
+        
+    @last_col.deleter
+    def last_col(self):
+        del self._last_col
+        
+    @property
+    def first_row(self):
+        return self._first_row
+    
+    @first_row.setter
+    def first_row(self, value):
+        self._first_row = value
+        
+    @first_row.deleter
+    def first_row(self):
+        del self._first_row
+        
+    @property
+    def last_row(self):
+        return self._last_row
+    
+    @last_row.setter
+    def last_row(self, value):
+        self._last_row = value
+        
+    @last_row.deleter
+    def last_row(self):
+        del self._last_row
+        
+    @property
+    def selection(self):
+        return self._selection
+    
+    @selection.setter
+    def selection(self, value):
+        self._selection = value
+                
+class Grid(AbstractGrid, ABC):
     def __init__(
             self,
-            scene: _Optional[object] = None,
             blueprint: _Optional[type[Blueprint.AbstractGridBlueprint]] = None,
             cell_size: _Optional[int] = None,
             dimensions: _Optional[tuple[int, int]] = None,
@@ -91,10 +277,8 @@ class Grid(_QuietDict, ABC):
             noise_roughness: _Optional[float] = None            
     ):
         self.grid_id = uuid4().hex if blueprint is None else blueprint.blueprint_id
-        self.scene = scene
-        self.grid_batch = pyglet.graphics.Batch()
-        self._gen_terrain = gen_terrain if gen_terrain is not None else True
-        self._blueprint = blueprint if blueprint is not None else Blueprint.TerrainGridBlueprint(cell_size, dimensions, self.grid_id, noise_scale, noise_octaves, noise_roughness) if self._gen_terrain else BaseGridBlueprint(cell_size, dimensions, self.grid_id)
+        self.gen_terrain = gen_terrain if gen_terrain is not None else True
+        self.blueprint = blueprint if blueprint is not None else Blueprint.TerrainGridBlueprint(cell_size, dimensions, self.grid_id, noise_scale, noise_octaves, noise_roughness) if self._gen_terrain else BaseGridBlueprint(cell_size, dimensions, self.grid_id)
         self.grid_array = self.blueprint.array
         self.dictTerrain = self.blueprint.dictTerrain
         self.grid_plan = self.blueprint.dictGrid
@@ -115,11 +299,23 @@ class Grid(_QuietDict, ABC):
         self._last_row = None
         self.get_first_last()
         self.selection = None
+        self.set_rivers(2)
+        
         for row in self.rows:
             row.row_index = self.rows.index(row)
         for col in self.cols:
             col.col_index = self.cols.index(col)
 
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        nonattrs = ['_cols', '_rows', '_quadrants', '_first_col', '_first_row', '_last_col', '_last_row']
+        for nonattr in nonattrs:
+            del state[nonattr]
+        return state
+    
+    def __setstate__(self, state):
+        self.__dict__.update(state)
 
 
     def get_first_last(self):
@@ -128,42 +324,6 @@ class Grid(_QuietDict, ABC):
         self._first_row = self.rows[0]
         self._last_row = self.rows[-1]
     
-    @property
-    def blueprint(self):
-        return self._blueprint
-
-    @property
-    def first_col(self):
-        return self._first_col
-    
-    @first_col.setter
-    def first_col(self, value):
-        self._first_col = value
-
-    @property
-    def last_col(self):
-        return self._last_col
-    
-    @last_col.setter
-    def last_col(self, value):
-        self._last_col = value
-
-    @property
-    def first_row(self):
-        return self._first_row
-    
-    @first_row.setter
-    def first_row(self, value):
-        self._first_row = value
-
-    @property
-    def last_row(self):
-        return self._last_row
-    
-    @last_row.setter
-    def last_row(self, value):
-        self._last_row = value
-
     def _set_up(self):
         self._set_up_rank()
         self._set_up_file()
@@ -345,6 +505,12 @@ class Grid(_QuietDict, ABC):
             cella = cella.designation
         if isinstance(cellb, Cell):
             cellb = cellb.designation
+        cellA = self.cells[cella]
+        if cellb in cellA.adjacent:
+            cellB = self.cells[cellb]
+            for direction, adjacent in DIRECTIONS.items():
+                if cellB == getattr(cellA, adjacent):
+                    return direction
         path = self._astar(cella, cellb)
         path.remove(cella)
         if path == []:
@@ -408,8 +574,104 @@ class Grid(_QuietDict, ABC):
                         if neighbor_cell.passable:
                             queue.append(neighbor_cell)
         return list(landmass_cells)
+    
+    def find_coastal_cells(self, landmass_cells):
+        """
+        Finds and returns all cells that are adjacent to a landmass.
 
+        Args:
+            landmass_cells: List of cells belonging to the landmass.
+
+        Returns:
+            List of cells that are adjacent to a landmass.
+        """
+        coastal_cells = set()
+        for landmass_cell in landmass_cells:
+            for neighbor in landmass_cell.adjacent:
+                neighbor_cell = self.cells[neighbor]
+                if not neighbor_cell.passable:
+                    coastal_cells.add(landmass_cell)
+        return list(coastal_cells)
+    
+    def expand_river_path(self, path):
+        expanded_path = []
+        for i, cell in enumerate(path):
+            cell = self.cells[cell]
+            expanded_path.append(cell)
+            adjacent_cells = cell.adjacent
+            for adjacent_cell in adjacent_cells:
+                adjacent_cell = self.cells[adjacent_cell]
+                if adjacent_cell not in expanded_path:
+                    expanded_path.append(adjacent_cell)
+            if i % random.randint(1, 10) == 0:
+                for _ in range(random.randint(1, 5)):
+                    cell = expanded_path[-1]
+                    adjacent_cells = cell.adjacent
+                    for adjacent_cell in adjacent_cells:
+                        adjacent_cell = self.cells[adjacent_cell]
+                        if adjacent_cell not in expanded_path:
+                            expanded_path.append(adjacent_cell)
+        return expanded_path
+
+    def shape_river_path(self, expanded_path):
+        shaped_path = []
+        for i, cell in enumerate(expanded_path):
+            if i % 2 == 0:
+                shaped_path.append(cell)
+            else:
+                previous_cell = expanded_path[i - 1]
+                next_cell = expanded_path[i + 1] if i + 1 < len(expanded_path) else None
+                if next_cell is not None:
+                    direction = self.get_direction(previous_cell, next_cell)
+                    if direction in DIRECTIONS.keys():
+                        shaped_path.append(cell)
+        return shaped_path
+
+    def generate_realistic_river(self, start_cell: Cell, end_cell: Cell):
+        path = self.get_path(start_cell, end_cell)
+        if path is not None:
+            expanded_path = self.expand_river_path(path)
+#            shaped_path = self.shape_river_path(expanded_path)
+            for cell in expanded_path:
+                cell.terrain_str = 'river'
+                cell.terrain_raw = 0.0
+                cell.terrain_int = 9
+                cell.terrain_color = DODGER_BLUE
+                self.dictTerrain[cell.designation] = {
+                    'str': cell.terrain_str, 
+                    'raw': cell.terrain_raw, 
+                    'int': cell.terrain_int, 
+                    'color': cell.terrain_color, 
+                    'cost_in': 2, 
+                    'cost_out': 2
+                    }        
+        else:
+            print("No path found between the start and end cells.")
+
+    def get_river_ends(self, coastal_cells, length = 25):
+        """
+        Randomly chooses and returns a cell to use as the mouth of a river.
+
+        Args:
+            coastal_cells: List of cells that are adjacent to a landmass.
+
+        Returns:
+            Cell that is the mouth of a river.
+        """
+        start = random.choice(coastal_cells)
+        end = self.random_cell(attr=("passable", True))
+        while length + (length // 10) < self.get_distance(start.designation, end.designation) < length - (length//10):
+            end = self.random_cell(attr=("passable", True))
+        return start.designation, end.designation
+        
+    def set_rivers(self, river_count):
+        for _ in range(river_count):
+            landmass_cells = self.find_landmass_cells(self.random_cell(attr=('passable', True)))
+            coastal_cells = self.find_coastal_cells(landmass_cells)
+            start, end = self.get_river_ends(coastal_cells)
+            self.generate_realistic_river(start, end)            
     # Define the _heuristic function
+
     def _heuristic(self, cella, cellb):
         """Estimates the distance between two cells using Manhattan distance"""
         cell_a_coords = self.cells[cella].coordinates

@@ -1,28 +1,18 @@
-import itertools
 from .grid_processing import *
 from .terrain_processing import *
 
-import random
-import noise
-
 import numpy as np
-
 from collections import defaultdict
-
-import json
 from uuid import uuid4
 import pickle
 
-saves_dir = 'saves/grid/'
+saves_dir = '/devel/fresh/envs/project/src/grid/saves/'
 def save_blueprint(blueprint):
     import os
-    if not os.path.exists('saves'):
-        os.makedirs('saves')
-    if not os.path.exists('saves/grids'):
-        os.makedirs('saves/grids')
-    if not os.path.exists(f'saves/grids/{blueprint.blueprint_id}'):
-        os.makedirs(f'saves/grids/{blueprint.blueprint_id}')
-    with open(f'{saves_dir}{blueprint.blueprint_id}/blueprint.{blueprint.blueprint_id[-5:]}.pkl', 'wb') as f:
+    os.chdir(f'{saves_dir}')
+    if not os.path.exists(f'{blueprint.blueprint_id[-5:]}'):
+        os.makedirs(f'{blueprint.blueprint_id[-5:]}')
+    with open(f'{blueprint.blueprint_id[-5:]}/blueprint.{blueprint.blueprint_id[-5:]}.pkl', 'wb') as f:
         pickle.dump(blueprint, f)
 
 

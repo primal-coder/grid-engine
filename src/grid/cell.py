@@ -7,8 +7,6 @@ from abc import ABC
 from typing import Optional as _Optional, Union as _Union
 import weakref
 
-import pyglet.event
-
 _ZONE_COLOR_MAP = {
         'regions' : (255, 0, 0, 255)
 }
@@ -86,7 +84,17 @@ class AbstractCell:
     _array = None
     _entry_terrain = None
     _passable = None
+    
+    def __init__(self, cell_designation = None, row = None, col = None, parentgrid = None):
+        self._null = None
 
+    @property
+    def null(self):
+        return self._null
+
+    @null.setter
+    def null(self, value):
+        self._null = value
 
     @property
     def up_left(self):
@@ -303,7 +311,6 @@ def _dynamic_cell_decorator(cell: Cell = None):
         return wrapper
     return decorator
 
-@capture_parentgrid
 class Cell(AbstractCell):
 
     def __repr__(self):
@@ -317,54 +324,55 @@ class Cell(AbstractCell):
             parentgrid: _Optional[Grid] = None,
     ) -> None:
         self.parentgrid = parentgrid
-        self.gen_terrain = self.parentgrid._gen_terrain
-        self.entry = self.parentgrid._blueprint.dictGrid[designation]
+        if parentgrid is not None:
+            self.gen_terrain = self.parentgrid.gen_terrain
+            self.entry = self.parentgrid.blueprint.dictGrid[designation]
 
-        self.designation = designation if designation is not None else row + col
-        self.cell_index = self.entry['cell_index']
+            self.designation = designation if designation is not None else row + col
+            self.cell_index = self.entry['cell_index']
 
-        self.row_name = designation[:-5] if row is None else row
-        self.row_index = self.entry['row_index']
+            self.row_name = designation[:-5] if row is None else row
+            self.row_index = self.entry['row_index']
 
-        self.col_name = designation[-5:] if col is None else col
-        self.col_index = self.entry['col_index']
+            self.col_name = designation[-5:] if col is None else col
+            self.col_index = self.entry['col_index']
 
-        self.array = self.parentgrid.grid_array[self.col_index][self.row_index]
+            self.array = self.parentgrid.grid_array[self.col_index][self.row_index]
 
-        self.coordinates = self.entry['coordinates']
-        self.x = self.coordinates[0]
-        self.y = self.coordinates[1]
+            self.coordinates = self.entry['coordinates']
+            self.x = self.coordinates[0]
+            self.y = self.coordinates[1]
 
-        self.size = self.parentgrid.cell_size
-        self.width = self.size
-        self.height = self.size
+            self.size = self.parentgrid.cell_size
+            self.width = self.size
+            self.height = self.size
 
-        self.adjacent = self.entry['adjacent']
-        if self.gen_terrain:
-            self._entry_terrain = self.parentgrid.dictTerrain[self.designation]
-            self.terrain_str = self.parentgrid.dictTerrain[self.designation]['str']
-            self.terrain_raw = self.parentgrid.dictTerrain[self.designation]['raw']
-            self.terrain_int = self.parentgrid.dictTerrain[self.designation]['int']
-            self.terrain_color = self.parentgrid.dictTerrain[self.designation]['color']
+            self.adjacent = self.entry['adjacent']
+            if self.gen_terrain:
+                self._entry_terrain = self.parentgrid.dictTerrain[self.designation]
+                self.terrain_str = self.parentgrid.dictTerrain[self.designation]['str']
+                self.terrain_raw = self.parentgrid.dictTerrain[self.designation]['raw']
+                self.terrain_int = self.parentgrid.dictTerrain[self.designation]['int']
+                self.terrain_color = self.parentgrid.dictTerrain[self.designation]['color']
 
-        self.overlay_color = None
-        self.stored_overlay_color = None
+            self.overlay_color = None
+            self.stored_overlay_color = None
 
-        self.quadrant_index = self.entry['quadrant_index']
-        self._passable = self.entry['passable']
+            self.quadrant_index = self.entry['quadrant_index']
+            self._passable = self.entry['passable']
 
-        self.groups = {}
-        self._in_zone = False
-        self._in_region = False
+            self.groups = {}
+            self._in_zone = False
+            self._in_region = False
 
-        for key, val in self.entry.items():
-            if key not in list(self.entry)[:7]:
-                setattr(self, key, val)
+            for key, val in self.entry.items():
+                if key not in list(self.entry)[:7]:
+                    setattr(self, key, val)
 
-        self.neighborhood = _Neighborhood
+            self.neighborhood = _Neighborhood
         
         # self.paint = None
-        self.paint = self.paint_terrain(batch=self.parentgrid.grid_batch)
+        # self.paint = self.paint_terrain(batch=self.parentgrid.grid_batch)
 
 
     # def _setup_row_col(self):

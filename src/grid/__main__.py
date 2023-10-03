@@ -28,7 +28,7 @@ from .grid import *
 terrain_grids = f'{os.getcwd()}{os.sep}src{os.sep}grid{os.sep}terrain_grids{os.sep}'
 grids = f'{os.getcwd()}{os.sep}src{os.sep}grid{os.sep}grids{os.sep}'
 blueprints = f'{os.getcwd()}{os.sep}src{os.sep}grid{os.sep}blueprint{os.sep}blueprints{os.sep}'
-
+saves_dir = '/devel/fresh/envs/project/src/grid/saves/'
 
 if not args.verbose:
     def print(*args):
@@ -47,7 +47,7 @@ if args.blueprint is not None:
     print('Success! Blueprint loaded.')
 else:
     print(f'Generating blueprint with cell size {args.size}, {args.rows} rows and {args.columns} columns. Total_cells: {args.rows*args.columns} ...')
-    blueprint = Blueprint.TerrainGridBlueprint(args.size, (args.columns*args.size, args.rows*args.size), args.noise_scale, args.noise_octaves, args.noise_roughness)
+    blueprint = Blueprint.TerrainGridBlueprint(args.size, (args.columns*args.size, args.rows*args.size), noise_scale=args.noise_scale, noise_octaves=args.noise_octaves, noise_roughness=args.noise_roughness)
     print(f'Success! Blueprint generated. Dimensions: {blueprint.grid_dimensions}')
 
 print('Building grid from blueprint ...')
@@ -103,6 +103,5 @@ for count, (cell, info) in enumerate(grid.blueprint.dictGrid.items(), start=1):
 #     pyglet.app.run()
 
 # Usage example
-image.save(f'saves/grids/{grid.grid_id}/grid.png')
-print(f'Success! Grid image saved to {args.output}')
+image.save(f'{saves_dir}{grid.grid_id[-5:]}/grid.png')
 
