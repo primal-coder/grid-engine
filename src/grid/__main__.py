@@ -28,7 +28,7 @@ from .grid import *
 terrain_grids = f'{os.getcwd()}{os.sep}src{os.sep}grid{os.sep}terrain_grids{os.sep}'
 grids = f'{os.getcwd()}{os.sep}src{os.sep}grid{os.sep}grids{os.sep}'
 blueprints = f'{os.getcwd()}{os.sep}src{os.sep}grid{os.sep}blueprint{os.sep}blueprints{os.sep}'
-saves_dir = '/devel/fresh/envs/project/src/grid/saves/'
+saves_dir = '/home/king/Clones/grid-engine/src/grid/saves/'
 
 if not args.verbose:
     def print(*args):

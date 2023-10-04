@@ -6,7 +6,7 @@ from collections import defaultdict
 from uuid import uuid4
 import pickle
 
-saves_dir = '/devel/fresh/envs/project/src/grid/saves/'
+saves_dir = '/home/king/Clones/grid-engine/src/grid/saves/'
 def save_blueprint(blueprint):
     import os
     os.chdir(f'{saves_dir}')

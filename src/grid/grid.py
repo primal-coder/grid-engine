@@ -30,7 +30,7 @@ from typing import Optional as _Optional, Union as _Union
 
 DODGER_BLUE = (16, 78, 139, 255)
 
-saves_dir = '/devel/fresh/envs/project/src/grid/saves/'
+saves_dir = '/home/king/Clones/grid-engine/src/grid/saves/'
 
 DIRECTIONS = {'N': 'up', 'NE': 'up_right', 'E': 'right', 'SE': 'down_right', 'S': 'down', 'SW': 'down_left', 'W': 'left', 'NW': 'up_left'}
 
@@ -678,7 +678,10 @@ class Grid(AbstractGrid, ABC):
         Returns:
             List of paths between the ends of a river.
         """
-        if self.get_direction(start, end) in ['NE', 'E', 'SE']:
+        print('Getting heading.')
+        heading = self.get_direction(start, end)
+        print('found heading')
+        if heading in ['NE', 'E', 'SE']:
             paths = []
             path_count = self.get_distance(start, end, 'cells')// 10
             for _ in range(path_count):
@@ -690,8 +693,7 @@ class Grid(AbstractGrid, ABC):
                 else:
                     paths.append(self.get_path(paths[-1][-1], bend))
             paths.append(self.get_path(paths[-1][-1], end))
-            return paths
-        elif self.get_direction(start, end) in ['SW', 'W', 'NW']:
+        elif heading in ['SW', 'W', 'NW']:
             paths = []
             path_count = self.get_distance(start, end, 'cells')// 10
             for _ in range(path_count):
@@ -703,8 +705,7 @@ class Grid(AbstractGrid, ABC):
                 else:
                     paths.append(self.get_path(paths[-1][-1], bend))
             paths.append(self.get_path(paths[-1][-1], end))
-            return paths
-        elif self.get_direction(start, end) in ['N', 'S']:
+        elif heading in ['N', 'S']:
             paths = []
             path_count = self.get_distance(start, end, 'cells')// 10
             for _ in range(path_count):
@@ -716,7 +717,8 @@ class Grid(AbstractGrid, ABC):
                 else:
                     paths.append(self.get_path(paths[-1][-1], bend))
             paths.append(self.get_path(paths[-1][-1], end))
-            return paths
+        print('Done bending')
+        return paths
     
     def set_rivers(self, river_count):
         for _ in range(river_count):
