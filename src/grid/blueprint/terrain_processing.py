@@ -4,63 +4,39 @@ import numpy as np
 import random
 import noise
 
-DODGER_BLUE = (16, 78, 139, 255)
-PALE_GREEN = (84, 139, 84, 255)
-MEDIUM_GREY = (169, 169, 169, 255)
-DULL_GREY = (105, 105, 105, 255)
-STONE_GREY = (112, 128, 136, 255)
-DARK_GREY = (79, 83, 72, 255)
-SNOW_WHITE = (255, 250, 250, 255)
+import json
 
-_COLORS = [
-        DODGER_BLUE, PALE_GREEN, MEDIUM_GREY, DULL_GREY, STONE_GREY, DARK_GREY, SNOW_WHITE
-]
-
-
-TERRAIN_DICT = {
-        'MOUNTAIN_PEAK': {
-                'raw_max': 0.12,
-                'int': 0,
-                'color': _COLORS[6],
-                'cost_in': float('inf'),
-                'cost_out': 2
-        },
-        'MOUNTAIN_SIDE': {
-                'raw_max': 0.18,
-                'int': 1,
-                'color': _COLORS[5],
-                'cost_in': float('inf'),
-                'cost_out': 1
-        },
-        'MOUNTAIN_BASE': {
-                'raw_max': 0.23,
-                'int': 2,
-                'color': _COLORS[4],
-                'cost_in': float('inf'),
-                'cost_out': 0.5
-        },
-        'MOUND':        {
-                'raw_max': 0.28,
-                'int': 3,
-                'color': _COLORS[3],
-                'cost_in': 2,
-                'cost_out': 0
-        },
-        'GRASS':         {
-                'raw_max': 0.495,
-                'int':     4,
-                'color':   _COLORS[1],
-                'cost_in':    1,
-                'cost_out':   1
-        },
-        'SAND':          {
-                'raw_max': 0.517,
-                'int': 5,
-                'color': _COLORS[2],
-                'cost_in': 1.25,
-                'cost_out': 1
-        }
+_COLORS = {
+    'OCEAN_BLUE': (16, 78, 139, 255),
+    'GRASS_GREEN': (84, 139, 84, 255),
+    'PLAIN_GREEN': (90, 154, 90, 255),
+    'FOOTHILL_GREEN': (82, 144, 78, 255),
+    'SEASHELL_WHITE': (255, 245, 238, 255),
+    'SANDY_GREY': (169, 169, 169, 255),
+    'MOUND_GREY': (105, 105, 105, 255),
+    'BASE_GREY': (112, 128, 136, 255),
+    'SIDE_GREY': (79, 83, 72, 255),
+    'CRAG_GREY': (48, 42, 36, 255),
+    'SNOW_WHITE': (253, 245, 245, 255)
 }
+
+
+def load_terrain() -> type[dict]:
+    """
+    Loads the terrain data from the terrain.json file.
+    """
+    with open('grid/blueprint/terrains.json', 'r') as f:
+        terrain = json.load(f)
+
+    for k, v in terrain['default'].items():
+        for tk, tv in v.items():
+            terrain['default'][k][tk] = _COLORS[tv] if tk == 'color' else tv
+
+    return terrain
+
+TERRAINS = load_terrain()
+
+DEFAULT_TERRAIN_DICT = TERRAINS['default']
 
 
 def diamond_square(noise_roughness: float, row_count: int, col_count: int) -> type[np.ndarray]:
@@ -186,7 +162,7 @@ def generate_terrain_dict(terrain_data_ds: type[np.ndarray], terrain_data_pn: ty
         terrain_pn_raw = terrain_data_pn[y // cell_size][x // cell_size]
         terrain_ds_raw = terrain_data_ds[r, f]
         terrain_raw = (terrain_pn_raw + terrain_ds_raw) / 1.5
-        for terrain, info in TERRAIN_DICT.items():
+        for terrain, info in DEFAULT_TERRAIN_DICT.items():
             if terrain_raw <= info['raw_max']:
                 terrain_dict[cell]['str'] = terrain
                 terrain_dict[cell]['raw'] = terrain_raw
@@ -202,4 +178,4 @@ def process_noise(noise_scale: int, noise_octaves: int, noise_roughness: float, 
     terrain_data_pn = perlin_noise(row_count, col_count, noise_scale, noise_octaves)
     return generate_terrain_dict(
         terrain_data_ds, terrain_data_pn, cell_size, grid_dict
-    )
+    ) 

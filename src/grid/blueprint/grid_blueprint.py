@@ -1,12 +1,15 @@
 from .grid_processing import *
 from .terrain_processing import *
-
+from .terrain_processing import _COLORS 
 import numpy as np
 from collections import defaultdict
 from uuid import uuid4
 import pickle
 
-saves_dir = '/home/king/Clones/grid-engine/src/grid/saves/'
+saves_dir = '/devel/fresh/envs/grid-engine/src/grid/saves/'
+
+OCEAN_BLUE = _COLORS['OCEAN_BLUE']
+
 def save_blueprint(blueprint):
     import os
     os.chdir(f'{saves_dir}')
@@ -306,7 +309,7 @@ class TerrainGridBlueprint(BaseGridBlueprint):
                 self.dictTerrain[cell]['raw'] = 0.0
                 self.dictTerrain[cell]['int'] = 9
                 self.dictTerrain[cell]['str'] = 'OCEAN'
-                self.dictTerrain[cell]['color'] = DODGER_BLUE
+                self.dictTerrain[cell]['color'] = OCEAN_BLUE
                 self.dictTerrain[cell]['cost_in'] = float('inf')
                 self.dictTerrain[cell]['cost_out'] = float('inf')
                 self.dictGrid[cell]['passable'] = False

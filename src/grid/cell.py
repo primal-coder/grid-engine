@@ -364,6 +364,8 @@ class Cell(AbstractCell):
             self.groups = {}
             self._in_zone = False
             self._in_region = False
+            self._landmass_index = None
+            self._is_coastal = False
 
             for key, val in self.entry.items():
                 if key not in list(self.entry)[:7]:
@@ -400,6 +402,26 @@ class Cell(AbstractCell):
         """Returns True if the cell is in a region, False otherwise"""
         return self.entry_zone['regions'] is not None
 
+    @property
+    def landmass_index(self):
+        """Returns the landmass index of the cell"""
+        return self._landmass_index
+
+    @landmass_index.setter
+    def landmass_index(self, value):
+        """Sets the landmass index of the cell"""
+        self._landmass_index = value
+
+    @property
+    def is_coastal(self):
+        """Returns True if the cell is coastal, False otherwise"""
+        return self._is_coastal
+    
+    @is_coastal.setter
+    def is_coastal(self, value):
+        """Sets the is_coastal value of the cell"""
+        self._is_coastal = value
+        
     def cell_decorator(self, func):
         """Decorator for cell methods that require the cell as an argument"""
         def wrapper(*args, **kwargs):
