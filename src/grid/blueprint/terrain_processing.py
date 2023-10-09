@@ -170,6 +170,7 @@ def generate_terrain_dict(terrain_data_ds: type[np.ndarray], terrain_data_pn: ty
                 terrain_dict[cell]['color'] = info['color']
                 terrain_dict[cell]['cost_in'] = info['cost_in']
                 terrain_dict[cell]['cost_out'] = info['cost_out']
+                terrain_dict[cell]['char'] = info['char']
                 break
     return terrain_dict
 

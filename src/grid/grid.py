@@ -29,6 +29,7 @@ from random import choice as _choice
 from typing import Optional as _Optional, Union as _Union
 
 RIVER_BLUE = (18, 70, 132, 255)
+RIVERBANK_BROWN = (92, 45, 15, 255)
 
 saves_dir = '/devel/fresh/envs/grid-engine/src/grid/saves/'
 
@@ -61,6 +62,18 @@ def get_vector_direction(pointa, pointb):
             "Invalid angle",
     )
 
+
+def extract_cell_data(grid):
+    """Accepts a grid object and returns only the necessary data to draw the cells"""
+    cell_data = []
+    for c, cell in grid.cells.items.items():
+        cdata = [cell.x, cell.y, cell.terrain_color]
+        cell_data.append(cdata)
+    return cell_data
+
+def delete_grid(grid: Grid):
+    """Deletes the grid object from memory in order to avoid OOM events"""
+    del grid
 
 def save_grid(grid: Grid):
     import os
@@ -697,7 +710,7 @@ class Grid(AbstractGrid, ABC):
             expanded_path = self.expand_river_path(path)
             # shaped_path = self.shape_river_path(expanded_path)
             for cell in expanded_path:
-                cell.terrain_str = 'river'
+                cell.terrain_str = 'RIVER'
                 cell.terrain_raw = 0.0
                 cell.terrain_int = 9
                 cell.terrain_color = RIVER_BLUE
@@ -712,37 +725,52 @@ class Grid(AbstractGrid, ABC):
         else:
             print("No path found between the start and end cells.")
 
+    def get_river_banks(self):
+        for cell in self.cells.values():
+            if cell.terrain_str == 'river':
+                adjacent_cells = cell.adjacent
+                for adjacent_cell in adjacent_cells:
+                    adjacent_cell = self.cells[adjacent_cell]
+                    if adjacent_cell.terrain_str not in ['RIVER', 'OCEAN', 'SAND']:
+                        adjacent_cell.terrain_str = 'RIVERBANK'
+                        adjacent_cell.terrain_raw = 0.0
+                        adjacent_cell.terrain_int = 8
+                        adjacent_cell.terrain_color = RIVERBANK_BROWN
+                        self.dictTerrain[adjacent_cell.designation] = {
+                            'str': adjacent_cell.terrain_str, 
+                            'raw': adjacent_cell.terrain_raw, 
+                            'int': adjacent_cell.terrain_int, 
+                            'color': adjacent_cell.terrain_color, 
+                            'cost_in': 1, 
+                            'cost_out': 2
+                            }
 
     def get_river_by_walk(self, start_cell: Cell):
         river_cells = [start_cell]
         branch_cells = []
-        start_cell = self.cells[start_cell]
         direction = random.randint(0, 7)
-        for step in range(640):
-            direction = direction if step % 16 != 0 else abs((random.randint(0, 7)) - direction)
-            current_cell = start_cell if step == 0 else self.cells[river_cells[-1]]
-            adjacent_cells = current_cell.adjacent
+        for step in range(random.randint(960, 1496)):
+            direction = direction if step % 24 != 0 else abs((random.randint(0, 7)) - direction)
+            current_cell = self.cells[river_cells[-1]]
             if adjacent_cells := [
                 adjacent_cell
-                for adjacent_cell in adjacent_cells
+                for adjacent_cell in current_cell.adjacent
                 if self.cells[adjacent_cell].passable
             ]:
-                next_cell = adjacent_cells[direction % len(adjacent_cells)]
+                next_cell = adjacent_cells[(direction + (0 if step % 6 else random.randint(-2, 2))) % len(adjacent_cells)]
                 river_cells.append(next_cell)
-            if step >= 240:
+            if step >= 768:
                 # create branch and continue branch with each step
-                direction2 = direction + 1 if direction < 7 else direction - 1
+                direction2 = direction + 4 if direction < 3 else direction - 4
                 if not branch_cells:
-                    branch_cells.append(current_cell.adjacent[direction2 % len(current_cell.adjacent)])
-                else:
-                    adjacent_cells = self.cells[branch_cells[-1]].adjacent
-                    if adjacent_cells := [
-                        adjacent_cell
-                        for adjacent_cell in adjacent_cells
-                        if self.cells[adjacent_cell].passable
-                    ]:
-                        next_branch_cell = adjacent_cells[direction2 % len(adjacent_cells)]
-                        river_cells.append(next_branch_cell)
+                    branch_cells.append(current_cell.adjacent[(direction2 + (0 if step % 4 else random.randint(-2, 2))) % len(adjacent_cells)])
+                elif adjacent_cells := [
+                    adjacent_cell
+                    for adjacent_cell in self.cells[branch_cells[-1]].adjacent
+                    if self.cells[adjacent_cell].passable
+                ]:
+                    next_branch_cell = adjacent_cells[(direction2 + (0 if step % 6 else random.randint(-1, 1))) % len(adjacent_cells)]
+                    branch_cells.append(next_branch_cell)
 
         return [river_cells, branch_cells]
                         
@@ -912,13 +940,21 @@ class Grid(AbstractGrid, ABC):
 
     
     def set_rivers(self, river_count):
+        largest_land = 0
+        largest_size = 0
+        for i, landmass in self.landmasses.items():
+            landmass_size = len(landmass['landmass_cells'])
+            if landmass_size > largest_size:
+                largest_land = i
+                largest_size = landmass_size
         for _ in range(river_count):
-            landmass = self.landmasses[random.choice(list(self.landmasses.keys()))]
+            landmass = self.landmasses[largest_land]
             coastal_cells = landmass['coastal_cells']
             print('Building river ...')
             start, end = self.get_river_ends(coastal_cells)
             self.generate_realistic_river(start, end)
-            print('done')            
+        self.get_river_banks()
+        print('done')            
     # Define the _heuristic function
 
     def _heuristic(self, cella, cellb):

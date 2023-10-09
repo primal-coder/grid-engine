@@ -8,6 +8,7 @@ parser.add_help = True
 
 parser.add_argument('-i', '--interactive', action='store_true', help='Run an interactive session')
 parser.add_argument('-b', '--blueprint', dest='blueprint', type=str, default=None, help='Load a blueprint from a file')
+parser.add_argument('--ascii', action='store_true', help='Print the grid as ascii')
 parser.add_argument('-l', '--load', dest='load', type=str, default=None, help='Load a grid from a file')
 parser.add_argument('-t', '--terrain', action='store_true', default=True, help='Whether to generate terrain with the grid.')
 parser.add_argument('-ns', '--noise-scale', dest='noise_scale', type=int, default=100, help='Noise scale')
@@ -24,6 +25,7 @@ args = parser.parse_args()
 
 from .blueprint import *
 from .grid import *
+from .utility import *
 
 terrain_grids = f'{os.getcwd()}{os.sep}src{os.sep}grid{os.sep}terrain_grids{os.sep}'
 grids = f'{os.getcwd()}{os.sep}src{os.sep}grid{os.sep}grids{os.sep}'
@@ -55,52 +57,32 @@ grid = Grid(blueprint=blueprint, gen_terrain=True)
 print('Success! Grid generated.')
 
 if args.save:
-    print('Saving grid ...')
+    print('Pickling grid ...')
     save_grid(grid=grid)
     print('Success!')
-    print('Saving blueprint ...')
+    print('Pickling blueprint ...')
     Blueprint.save_blueprint(blueprint=blueprint)
     print('Success!')
     
-print('Generating grid image ...')
-print('Importing pillow ...')
-from PIL import Image, ImageDraw
-print('Success.')
-
-print('Creating raw image ...')
-image = Image.new('RGB', (grid.blueprint.grid_width, grid.blueprint.grid_height), (255, 255, 255))
-print('Creating draw object ...')
-draw = ImageDraw.Draw(image)
-print('Drawing cells ...')
-total = len(grid.cells.values())
-for count, (cell, info) in enumerate(grid.blueprint.dictGrid.items(), start=1):
-    print(f'Drawing cell {info["designation"]} ... {round((count/total)*100)}%', end='\r')
-    x = info['coordinates'][0]
-    y = info['coordinates'][1]
-    color = grid.blueprint.dictTerrain[cell]['color']
-    draw.rectangle((x, y, x+(args.size), y+(args.size)), fill=color)
-
-# def capture_grid_as_image(grid: Grid, output_path: str):
-#     window_width = grid.blueprint.grid_width
-#     window_height = grid.blueprint.grid_height
-
-#     # Create a larger window that can accommodate the entire grid
-#     window = pyglet.window.Window(width=window_width, height=window_height)
-
-#     @window.event
-#     def on_draw():
-#         window.clear()
-#         grid.grid_batch.draw()
-
-#         # Capture the grid as an image
-#         image = pyglet.image.get_buffer_manager().get_color_buffer()
-#         image.save(output_path)
-
-#         # Close the window after capturing the image
-#         pyglet.app.exit()
-
-#     pyglet.app.run()
-
-# Usage example
-image.save(f'{saves_dir}{grid.grid_id[-5:]}/grid.png')
+if args.ascii:
+    print('Writing ascii to file ...')
+    with open(f'{saves_dir}{grid.grid_id[-5:]}/grid.txt', 'w') as f:
+        rows = []
+        string = ''
+        for row in grid.rows:
+            for cell in row:
+                string += cell.terrain_char
+            rows.append(string)
+            string = ''
+        f.write('\n'.join(rows))
+    print('Success!')
+    
+cdata = extract_cell_data(grid)
+grid_id = grid.grid_id[-5:]
+height = grid.blueprint.grid_height
+width = grid.blueprint.grid_width
+delete_grid(grid)
+    
+generate_images((width, height), cdata, args.size, grid_id)
+    
 

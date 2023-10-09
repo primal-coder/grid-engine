@@ -354,6 +354,7 @@ class Cell(AbstractCell):
                 self.terrain_raw = self.parentgrid.dictTerrain[self.designation]['raw']
                 self.terrain_int = self.parentgrid.dictTerrain[self.designation]['int']
                 self.terrain_color = self.parentgrid.dictTerrain[self.designation]['color']
+                self.terrain_char = self.parentgrid.dictTerrain[self.designation]['char']
 
             self.overlay_color = None
             self.stored_overlay_color = None

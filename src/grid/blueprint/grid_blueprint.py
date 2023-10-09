@@ -41,7 +41,8 @@ layer_attributes = {
         'terrain':    [
                 'raw', 'int',
                 'str', 'color',
-                'cost_in', 'cost_out'
+                'cost_in', 'cost_out',
+                'char'
         ]
 }
 
@@ -312,6 +313,7 @@ class TerrainGridBlueprint(BaseGridBlueprint):
                 self.dictTerrain[cell]['color'] = OCEAN_BLUE
                 self.dictTerrain[cell]['cost_in'] = float('inf')
                 self.dictTerrain[cell]['cost_out'] = float('inf')
+                self.dictTerrain[cell]['char'] = '~'
                 self.dictGrid[cell]['passable'] = False
 
 
