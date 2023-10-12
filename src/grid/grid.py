@@ -29,7 +29,7 @@ from random import choice as _choice
 from typing import Optional as _Optional, Union as _Union
 
 RIVER_BLUE = (18, 70, 132, 255)
-RIVERBANK_BROWN = (92, 45, 15, 255)
+RIVERBANK_BROWN = (32, 89, 31, 255)
 
 saves_dir = '/devel/fresh/envs/grid-engine/src/grid/saves/'
 
@@ -348,12 +348,6 @@ class Grid(AbstractGrid, ABC):
         self._set_up_file()
         self._set_up_quadrants()
         self._set_up_cells()
-#        self._initgrid_objects()
-
-    # def _setup_cell_row_col(self):
-    #  
-    #     for cell in self.cells.values():
-    #         cell._setup_row_col()
 
     def _set_up_rank(self):
         setattr(self, 'rows', type('rows', (list,), {'blueprint': self.blueprint}))
@@ -676,15 +670,6 @@ class Grid(AbstractGrid, ABC):
                 adjacent_cell = self.cells[adjacent_cell]
                 if adjacent_cell not in expanded_path:
                     expanded_path.append(adjacent_cell)
-            # if i % random.randint(1, 10) == 0:
-            #     for _ in range(random.randint(1, 5)):
-            #         cell = expanded_path[-1]
-            #         adjacent_cells = cell.adjacent
-            #         adjacent_cells = [adjacent_cells[random.randint(0, len(adjacent_cells) - 1)] for _ in range(random.randint(1, 5))]
-            #         for adjacent_cell in adjacent_cells:
-            #             adjacent_cell = self.cells[adjacent_cell]
-            #             if adjacent_cell not in expanded_path:
-            #                 expanded_path.append(adjacent_cell)
         return expanded_path
 
     def shape_river_path(self, expanded_path):
@@ -701,7 +686,7 @@ class Grid(AbstractGrid, ABC):
                         shaped_path.append(cell)
         return shaped_path
 
-    def generate_realistic_river(self, start_cell: Cell, end_cell: Cell):
+    def generate_realistic_river(self, start_cell: Cell):
         # paths = self.get_river_bends(start_cell, end_cell)
         path = self.get_river_by_walk(start_cell)
         path = list(itertools.chain.from_iterable(path))
@@ -727,7 +712,7 @@ class Grid(AbstractGrid, ABC):
 
     def get_river_banks(self):
         for cell in self.cells.values():
-            if cell.terrain_str == 'river':
+            if cell.terrain_str == 'RIVER':
                 adjacent_cells = cell.adjacent
                 for adjacent_cell in adjacent_cells:
                     adjacent_cell = self.cells[adjacent_cell]
@@ -747,32 +732,38 @@ class Grid(AbstractGrid, ABC):
 
     def get_river_by_walk(self, start_cell: Cell):
         river_cells = [start_cell]
-        branch_cells = []
-        direction = random.randint(0, 7)
-        for step in range(random.randint(960, 1496)):
-            direction = direction if step % 24 != 0 else abs((random.randint(0, 7)) - direction)
+        # branch_cells = []
+        direction = 0
+        for step in range(random.randint(199, 201)):
             current_cell = self.cells[river_cells[-1]]
             if adjacent_cells := [
                 adjacent_cell
                 for adjacent_cell in current_cell.adjacent
                 if self.cells[adjacent_cell].passable
             ]:
-                next_cell = adjacent_cells[(direction + (0 if step % 6 else random.randint(-2, 2))) % len(adjacent_cells)]
+                direction = (
+                    direction
+                    if (step % 50 != 0 or step == 0)
+                    else direction - 2
+                    if direction >= 2
+                    else (direction + 2) % 8
+                )
+                next_cell = adjacent_cells[(direction + (0 if step % 3 else -1)) % len(adjacent_cells)]
                 river_cells.append(next_cell)
-            if step >= 768:
-                # create branch and continue branch with each step
-                direction2 = direction + 4 if direction < 3 else direction - 4
-                if not branch_cells:
-                    branch_cells.append(current_cell.adjacent[(direction2 + (0 if step % 4 else random.randint(-2, 2))) % len(adjacent_cells)])
-                elif adjacent_cells := [
-                    adjacent_cell
-                    for adjacent_cell in self.cells[branch_cells[-1]].adjacent
-                    if self.cells[adjacent_cell].passable
-                ]:
-                    next_branch_cell = adjacent_cells[(direction2 + (0 if step % 6 else random.randint(-1, 1))) % len(adjacent_cells)]
-                    branch_cells.append(next_branch_cell)
+                # if step >= 768:
+                #     # create branch and continue branch with each step
+                #     direction2 = direction + 4 if direction < 3 else direction - 4
+                #     if not branch_cells:
+                #         branch_cells.append(current_cell.adjacent[(direction2 + (0 if step % 4 else random.randint(-2, 2))) % len(adjacent_cells)])
+                #     elif adjacent_cells := [
+                #         adjacent_cell
+                #         for adjacent_cell in self.cells[branch_cells[-1]].adjacent
+                #         if self.cells[adjacent_cell].passable
+                #     ]:
+                #         next_branch_cell = adjacent_cells[(direction2 + (0 if step % 6 else random.randint(-1, 1))) % len(adjacent_cells)]
+                #         branch_cells.append(next_branch_cell)
 
-        return [river_cells, branch_cells]
+        return [river_cells]
                         
 
     def get_river_ends(self, coastal_cells, length = 64):
@@ -863,82 +854,7 @@ class Grid(AbstractGrid, ABC):
                 paths.append(bend_pathB)
         paths.append(self.get_path(paths[-1][-1], end))
         return paths
-                               
-    # def get_river_bends(self, start, end):
-    #     """
-    #     Finds several paths between the ends of river and returns them in a list.
-
-    #     Args:
-    #         start: Cell that is the mouth of a river.
-    #         end: Cell that is the end of a river.
-
-    #     Returns:
-    #         List of paths between the ends of a river.
-    #     """
-    #     print('Bending river ...')
-    #     heading = self.get_direction(start, end)
-
-    #     distance = len(self.get_path(start, end))
-    #     path_count = distance // 8
-    #     print(f'Number of bends: {path_count}')
-    #     paths = []
-
-    #     def get_bend_directions(heading, path_count):
-    #         if heading == 'E':
-    #             bends = ['N', 'S']*((path_count // 2)+1) if path_count > 1 else ['NW']
-    #             return (bend for bend in bends)
-    #         elif heading == 'NE':
-    #             bends = ['NW', 'SE']*((path_count // 2)+1) if path_count > 1 else ['S']
-    #             return (bend for bend in bends)
-    #         elif heading == 'W':
-    #             bends = ['N', 'S']*((path_count // 2)+1) if path_count > 1 else ['NE']
-    #             return (bend for bend in bends)
-    #         elif heading == 'NW':
-    #             bends = ['NE', 'SW']*((path_count // 2)+1) if path_count > 1 else ['S']
-    #             return (bend for bend in bends)
-    #         elif heading == 'N':
-    #             bends = ['E', 'W']*((path_count // 2)+1) if path_count > 1 else ['SE']
-    #             return (bend for bend in bends)
-    #         elif heading == 'SW':
-    #             bends = ['NW', 'SE']*((path_count // 2)+1) if path_count > 1 else ['N']
-    #             return (bend for bend in bends)
-    #         elif heading == 'S':
-    #             bends = ['E', 'W']*((path_count // 2)+1) if path_count > 1 else ['NE']
-    #             return (bend for bend in bends)
-    #         elif heading == 'SE':
-    #             bends = ['NE', 'SW']*((path_count // 2)+1) if path_count > 1 else ['N']
-    #             return (bend for bend in bends)
-
-    #     bend_directions = get_bend_directions(heading, path_count)
-
-    #     for i in range(path_count):
-    #         bend = self.random_cell(landmass_index=self.cells[start].landmass_index)
-    #         bend_direction = next(bend_directions)
-    #         if not paths:
-    #             bend_path = self.get_path(start, bend)
-    #             while self.get_direction(end, bend) != bend_direction and len(bend_path) > 16:
-    #                 print(f'Bend cell #{i+1}: {bend}', end='\r')
-    #                 bend = self.random_cell(landmass_index=self.cells[start].landmass_index)
-    #                 bend_path = self.get_path(start, bend)
-    #             paths.append(self.get_path(start, bend))
-    #         else:
-    #             bend_path = self.get_path(paths[-1][-1], bend)
-    #             while self.get_direction(end, bend) != bend_direction and len(bend_path) > 16:
-    #                 print(f'Bend cell #{i+1}: {bend}', end='\r')
-    #                 bend = self.random_cell(landmass_index=self.cells[start].landmass_index)
-    #                 bend_path = self.get_path(paths[-1][-1], bend)
-    #             paths.append(self.get_path(paths[-1][-1], bend))
-    #         print(f'Bend cell #{i+1}: {bend}')
-    #     if not paths:
-    #         print('Done! Closing river ...')
-    #         paths.append(self.get_path(start, end))
-    #     else:
-    #         print('Done! Closing river ...')
-    #         paths.append(self.get_path(paths[-1][-1], end))
-    #     return paths
-    
-
-    
+        
     def set_rivers(self, river_count):
         largest_land = 0
         largest_size = 0
@@ -947,12 +863,13 @@ class Grid(AbstractGrid, ABC):
             if landmass_size > largest_size:
                 largest_land = i
                 largest_size = landmass_size
-        for _ in range(river_count):
-            landmass = self.landmasses[largest_land]
-            coastal_cells = landmass['coastal_cells']
-            print('Building river ...')
-            start, end = self.get_river_ends(coastal_cells)
-            self.generate_realistic_river(start, end)
+        landmass = self.landmasses[largest_land]
+        land_cells = landmass['landmass_cells']
+        start: Cell = random.choice(land_cells)
+        while start.clearance_up < 200 or start.clearance_down < 200 or start.clearance_left < 50 or start.clearance_right < 50:
+            start = random.choice(land_cells)
+        print('Building river ...')
+        self.generate_realistic_river(start.designation)
         self.get_river_banks()
         print('done')            
     # Define the _heuristic function

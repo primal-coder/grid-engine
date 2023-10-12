@@ -175,7 +175,7 @@ def get_grid_dict(cell_strings: List[str], row_strings: List[str], col_strings: 
         } for i, cell in enumerate(cell_strings)
     }
     
-def get_quadrant_coordinates(row_count: int, col_count: int) -> List[List[Tuple[int, int]]]:
+def generate_quadrant_coordinates(row_count: int, col_count: int) -> List[List[Tuple[int, int]]]:
     """
     Get the coordinates of each quadrant in a grid.
 
@@ -242,7 +242,7 @@ def get_quadrant_indices(quadrant_coords: List[List[Tuple[int,int]]], grid_dict:
                 grid_dict[cell]['quadrant_index'] = i
     return grid_dict
 
-def get_adjacency(grid_dict: Dict[str, any], row_count: int, col_count: int) -> Dict[str, Any]:
+def generate_adjacency(grid_dict: Dict[str, any], row_count: int, col_count: int) -> Dict[str, Any]:
     """
     Assign adjacent cells to each cell in a grid.
 
