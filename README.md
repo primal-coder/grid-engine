@@ -53,7 +53,78 @@ python -m grid_engine --help
 #   -S, --save            Save the grid object to a file
 #   -T TYPE, --type TYPE  Type of file to save the grid as
 #   -v, --verbose         Verbose output
-``````
+```
 
-![grid](src/grid/terrain_grids/test_joe6.png)
+# Examples
 
+The following examples demonstrate the use of the grid-engine package.
+
+### CLI
+
+The following command:
+
+```bash
+python -m grid -v -S -t -ns 580 -no 93 -nr 0.47 -r 450 -c 800 -s 2 
+```
+
+Will produce the following output:
+    
+    ```bash
+    Generating blueprint with cell size 2, 450 rows and 800 columns. Total_cells: 360000 ...
+    Success! Blueprint generated. Dimensions: (1600, 900)
+    Building grid from blueprint ...
+    Finding landmasses ...
+    Separating islands from landmasses ...
+    Done.
+    Finding start to river ...
+    Found largest landmass: 3 with 239606 cells
+    Start cell: pb00527(443, 526)
+    Building river ...
+    River steps: 200
+    done
+    Success! Grid generated.
+    Pickling grid ...
+    Success!
+    Pickling blueprint ...
+    Success!
+    Generating grid image ...
+    Importing pillow ...
+    Preparing raw image ...
+    Counting cells ...
+    Total cells: 360000
+    Shuffling cells ...
+    Cells drawn.s 100%
+    Saving grid image ...
+    Grid ID: ee9e4
+    ```
+
+The following image is the result of the above command:
+
+![grid](src/grid/saves/ee9e4/grid.png)
+*The river generation algorithm is not perfect. I am currently working on improving it.*
+
+The above command will also produce the following files:
+
+- `grid.ee9e4.pickle`: A pickled Grid object.
+- `blueprint.ee9e4.pickle`: A pickled TerrainGridBlueprint object.
+
+```python
+import grid_engine
+from grid_engine import grid
+
+# Load the ee9e4 grid(assuming you've not generated any other grids)
+ee9e4 = grid.load_grid(0)
+
+print(ee9e4.grid_id)
+# output: 'fb16965aa77f44138dd6149b823ee9e4'
+
+# Get a random cell
+cellA = ee9e4.random_cell(attr=('passable', True))
+
+# Get another
+cellB = ee9e4.random_cell(attr=('passable', True))
+
+# Get a path from cellA to cellB
+path, cost = ee9e4.get_path(cellA, cellB)
+print(path)
+```
