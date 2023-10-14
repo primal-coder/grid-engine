@@ -9,8 +9,8 @@ The **grid-engine** package provides classes for generating and manipulating gri
 To use this package, import the necessary classes and functions. Here's an example:
 
 ```python
-import grid_engine
-from grid_engine import grid
+import gridengine
+from gridengine import grid
 
 # Create a grid
 grid = grid.Grid(cell_size=10, grid_dimensions=(1000, 1000))
@@ -25,10 +25,10 @@ loaded_grid = grid.Grid.load_grid(1)
 grid-engine also provides a command line interface. To use it, run the following command:
 
 ```bash
-python -m grid_engine --help
+python -m gridengine --help
 
 # Output:
-# usage: grid [-h] [-i] [-b BLUEPRINT] [--ascii] [-l LOAD] [-t] [-ns NOISE_SCALE] [-no NOISE_OCTAVES] [-nr NOISE_ROUGHNESS] [-r ROWS] [-c COLUMNS] [-s SIZE] [-S] [-T TYPE] [-v]
+# usage: gridengine [-h] [-i] [-b BLUEPRINT] [--ascii] [-l LOAD] [-t] [-ns NOISE_SCALE] [-no NOISE_OCTAVES] [-nr NOISE_ROUGHNESS] [-r ROWS] [-c COLUMNS] [-s SIZE] [-S] [-T TYPE] [-v]
 
 # Generate a visualized grid from a blueprint. For producing a blueprint, see the blueprint module.
 
@@ -64,7 +64,7 @@ The following examples demonstrate the use of the grid-engine package.
 The following command:
 
 ```bash
-python -m grid -v -S -t -ns 580 -no 93 -nr 0.47 -r 450 -c 800 -s 2 
+python -m gridengine -v -S -t -ns 580 -no 93 -nr 0.47 -r 450 -c 800 -s 2 
 ```
 
 Will produce the following output:
@@ -109,8 +109,8 @@ The above command will also produce the following files:
 - `blueprint.ee9e4.pickle`: A pickled TerrainGridBlueprint object.
 
 ```python
-import grid_engine
-from grid_engine import grid
+import gridengine
+from gridengine import grid
 
 # Load the ee9e4 grid(assuming you've not generated any other grids)
 ee9e4 = grid.load_grid(0)

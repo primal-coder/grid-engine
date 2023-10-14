@@ -1,0 +1,108 @@
+{
+    "default": {
+        "MOUNTAIN_PEAK": {
+            "raw_max": 0.1,
+            "int": 0,
+            "color": "SNOW_WHITE",
+            "cost_in": Infinity,
+            "cost_out": 10,
+            "char": "X"
+        },
+        "MOUNTAIN_CRAG": {
+            "raw_max": 0.15,
+            "int": 0,
+            "color": "CRAG_GREY",
+            "cost_in": Infinity,
+            "cost_out": 5,
+            "char": "|"
+        },
+        "MOUNTAIN_SIDE": {
+            "raw_max": 0.2,
+            "int": 1,
+            "color": "SIDE_GREY",
+            "cost_in": Infinity,
+            "cost_out": 5,
+            "char": "/"
+        },
+        "MOUNTAIN_BASE": {
+            "raw_max": 0.25,
+            "int": 2,
+            "color": "BASE_GREY",
+            "cost_in": Infinity,
+            "cost_out": 0,
+            "char": "-"
+        },
+        "MOUND": {
+            "raw_max": 0.3,
+            "int": 3,
+            "color": "MOUND_GREY",
+            "cost_in": 2,
+            "cost_out": 0,
+            "char": "_"
+        },
+        "HILL": {
+            "raw_max": 0.323,
+            "int": 3,
+            "color": "HILL_GREEN",
+            "cost_in": 1,
+            "cost_out": 0,
+            "char": " "
+        },
+        "FOOTHILL": {
+            "raw_max": 0.45,
+            "int": 3,
+            "color": "FOOTHILL_GREEN",
+            "cost_in": 1,
+            "cost_out": 0,
+            "char": " "
+        },
+        "GRASS0": {
+            "raw_max": 0.475,
+            "int": 4,
+            "color": "GRASS_GREEN",
+            "cost_in": 1,
+            "cost_out": 0,
+            "char": " "
+        },
+        "GRASS1": {
+            "raw_max": 0.482,
+            "int": 4,
+            "color": "PLAIN_GREEN",
+            "cost_in": 0,
+            "cost_out": 1,
+            "char": " "
+        },
+        "BEACH_GRASS": {
+            "raw_max": 0.488,
+            "int": 4,
+            "color": "BEACH_GREEN",
+            "cost_in": 1,
+            "cost_out": 0,
+            "char": " "
+        },
+        "SANDSTONE": {
+            "raw_max": 0.495,
+            "int": 4,
+            "color": "SANDSTONE_GREY",
+            "cost_in": 0,
+            "cost_out": 1,
+            "char": " "
+        },
+        "SAND": {
+            "raw_max": 0.517,
+            "int": 5,
+            "color": "SANDY_GREY",
+            "cost_in": 1.25,
+            "cost_out": 1,
+            "char": "."
+        },
+        "SEASHELL": {
+            "raw_max": 0.518,
+            "int": 6,
+            "color": "SEASHELL_WHITE",
+            "cost_in": 1.5,
+            "cost_out": 1,
+            "char": ","
+        }
+    }
+}
