@@ -403,9 +403,9 @@ def process_grid(row_count: int, col_count: int, cell_size: int) -> Dict[str, An
     cell_strings = get_cell_strings(row_strings, col_strings)
     cell_coordinates = get_cell_coordinates(cell_size, row_count, col_count)
     grid_dict = get_grid_dict(cell_strings, row_strings, col_strings, cell_coordinates)
-    quadrant_coords = get_quadrant_coordinates(row_count, col_count)
+    quadrant_coords = generate_quadrant_coordinates(row_count, col_count)
     grid_dict = get_quadrant_indices(quadrant_coords, grid_dict)
-    grid_dict = get_adjacency(grid_dict, row_count, col_count)
+    grid_dict = generate_adjacency(grid_dict, row_count, col_count)
     graph = get_graph(grid_dict)
     return {
         "cell_size": cell_size,

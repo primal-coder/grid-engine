@@ -53,7 +53,7 @@ else:
     print(f'Success! Blueprint generated. Dimensions: {blueprint.grid_dimensions}')
 
 print('Building grid from blueprint ...')
-grid = Grid(blueprint=blueprint, gen_terrain=True)
+grid = Grid(blueprint=blueprint, with_terrain=True)
 print('Success! Grid generated.')
 
 if args.save:

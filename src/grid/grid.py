@@ -1,9 +1,8 @@
 from __future__ import annotations
 
+from .terraformer import *
 from .cell import *
-
 from .blueprint import *
-
 from .quiet_dict import QuietDict as _QuietDict
 
 import pickle
@@ -11,8 +10,6 @@ import pickle
 import random
 
 import heapq as _heapq
-
-import itertools
 
 from pymunk import Vec2d
 
@@ -96,8 +93,9 @@ class Cells(_QuietDict):
 
 class AbstractGrid(_QuietDict, ABC):
     _grid_id = None
-    _gen_terrain = None
+    _with_terrain = None
     _blueprint = None
+    _terraformer = None
     _grid_array = None
     _dictTerrain = None
     _grid_plan = None
@@ -125,12 +123,12 @@ class AbstractGrid(_QuietDict, ABC):
         self._grid_id = value
         
     @property
-    def gen_terrain(self):
-        return self._gen_terrain
+    def with_terrain(self):
+        return self._with_terrain
     
-    @gen_terrain.setter
-    def gen_terrain(self, value):
-        self._gen_terrain = value
+    @with_terrain.setter
+    def with_terrain(self, value):
+        self._with_terrain = value
         
     @property
     def blueprint(self):
@@ -139,6 +137,10 @@ class AbstractGrid(_QuietDict, ABC):
     @blueprint.setter
     def blueprint(self, value):
         self._blueprint = value
+        
+    @property
+    def terraformer(self):
+        return self._terraformer
         
     @property
     def grid_array(self):
@@ -286,14 +288,14 @@ class Grid(AbstractGrid, ABC):
             blueprint: _Optional[type[Blueprint.AbstractGridBlueprint]] = None,
             cell_size: _Optional[int] = None,
             dimensions: _Optional[tuple[int, int]] = None,
-            gen_terrain: _Optional[bool] = None,
+            with_terrain: _Optional[bool] = None,
             noise_scale: _Optional[float] = None,
             noise_octaves: _Optional[int] = None,
             noise_roughness: _Optional[float] = None            
     ):
         self.grid_id = uuid4().hex if blueprint is None else blueprint.blueprint_id
-        self.gen_terrain = gen_terrain if gen_terrain is not None else True
-        self.blueprint = blueprint if blueprint is not None else Blueprint.TerrainGridBlueprint(cell_size, dimensions, self.grid_id, noise_scale, noise_octaves, noise_roughness) if self._gen_terrain else BaseGridBlueprint(cell_size, dimensions, self.grid_id)
+        self.with_terrain = with_terrain if with_terrain is not None else True
+        self.blueprint = blueprint if blueprint is not None else Blueprint.TerrainGridBlueprint(cell_size, dimensions, self.grid_id, noise_scale, noise_octaves, noise_roughness) if self._with_terrain else BaseGridBlueprint(cell_size, dimensions, self.grid_id)
         self.grid_array = self.blueprint.array
         self.dictTerrain = self.blueprint.dictTerrain
         self.grid_plan = self.blueprint.dictGrid
@@ -314,17 +316,17 @@ class Grid(AbstractGrid, ABC):
         self._last_row = None
         self.get_first_last()
         self.selection = None
-        self.landmasses, self.islands = self.find_landmasses()
+        self.landmasses, self.islands = self._find_landmasses()
         self.landmass_count = len(self.landmasses)
         self.island_count = len(self.islands)
-        self.set_landmass_cells()
-        self.set_rivers(1)
+        self._set_landmass_cells()
         
         for row in self.rows:
             row.row_index = self.rows.index(row)
         for col in self.cols:
             col.col_index = self.cols.index(col)
-
+        self._terraformer = Terraformer(self)
+        # self.terraformer.set_rivers(1)
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -425,40 +427,40 @@ class Grid(AbstractGrid, ABC):
         else:
             return random.choice(nearest['cell'])
     
-    def get_rank_by_index(self, index: _Optional[int] = None) -> _Optional[list[Cell,]]:
+    def get_row_by_index(self, index: _Optional[int] = None) -> _Optional[list[Cell,]]:
         return self.blueprint.rank[index]
 
-    def get_rank_by_height(self, height: _Optional[int] = None) -> _Optional[list[Cell,]]:
+    def get_row_by_height(self, height: _Optional[int] = None) -> _Optional[list[Cell,]]:
         if self.cell_size == 1:
             return height
         for i in range(len(self.rows)):
             if self.rows[i].height <= height < self.rows[i + 1].height:
-                return self.get_rank_by_index(i)
+                return self.get_row_by_index(i)
 
     def get_row_by_name(self, row_name: _Optional[str] = None) -> _Optional[list[Cell,]]:
         return getattr(self.rows, f'row{row_name}')
     
-    def get_file_by_index(self, index: _Optional[int] = None) -> _Optional[list[Cell,]]:
+    def get_col_by_index(self, index: _Optional[int] = None) -> _Optional[list[Cell,]]:
         return self.blueprint.file[index]
     
-    def get_file_by_width(self, width: _Optional[int] = None) -> _Optional[list[Cell,]]:
+    def get_col_by_width(self, width: _Optional[int] = None) -> _Optional[list[Cell,]]:
         if self.cell_size == 1:
             return width
         for i in range(len(self.cols)):
             if i == len(self.cols) - 1 or self.cols[i].width <= width < self.cols[i + 1].width:
-                return self.get_file_by_index(i)
+                return self.get_col_by_index(i)
                     
     def get_col_by_name(self, col_name: _Optional[str] = None) -> _Optional[list[Cell,]]:
         return getattr(self.cols, f'col{col_name}')
     
     def get_cell_by_position(self, x: _Optional[int] , y: _Optional[int]) -> _Optional[Cell]:
-        r = self.get_rank_by_height(y)
-        f = self.get_file_by_width(x)
+        r = self.get_row_by_height(y)
+        f = self.get_col_by_width(x)
         return self.get_cell(f'{r}{f}')
     
     def get_cell_by_rank_file(self, rank: _Optional[int], file: _Optional[int]) -> _Optional[Cell]:
-        r = self.get_rank_by_index(rank)
-        f = self.get_file_by_index(file)
+        r = self.get_row_by_index(rank)
+        f = self.get_col_by_index(file)
         for cell in r:
             if cell in f:
                 return cell
@@ -508,13 +510,13 @@ class Grid(AbstractGrid, ABC):
             cella = cella.designation
         if isinstance(cellb, Cell):
             cellb = cellb.designation
-        path = self._astar(cella, cellb)
+        path, cost = self._astar(cella, cellb)
         path.remove(cella)
         for count, step in enumerate(path):
             if not self[step].passable:
                 path = path[:count]
                 break
-        return path
+        return path, cost
     
     def get_direction(
             self,
@@ -555,13 +557,14 @@ class Grid(AbstractGrid, ABC):
         return sorted(area_zone, key=lambda cell: cell.designation)
     
     def get_sub(self, bottom_left, top_right):
-        sub = []
-        for cell in self.cells.values():
-            if bottom_left[0] <= cell.row_index <= top_right[0] and bottom_left[1] <= cell.col_index <= top_right[1]:
-                sub.append(cell)
-        return sub
+        return [
+            cell
+            for cell in self.cells.values()
+            if bottom_left[0] <= cell.row_index <= top_right[0]
+            and bottom_left[1] <= cell.col_index <= top_right[1]
+        ]
 
-    def find_landmass_cells(self, center_cell):
+    def _get_landmass_cells(self, center_cell):
         """
         Finds and returns all cells belonging to the same landmass as the center cell.
         Uses the passable attribute of each instance of cell to determine if it belongs
@@ -597,7 +600,7 @@ class Grid(AbstractGrid, ABC):
                             queue.append(neighbor_cell)
         return list(landmass_cells)
 
-    def find_landmasses(self):
+    def _find_landmasses(self):
         """
         Finds and returns all landmasses on the grid.
 
@@ -609,13 +612,13 @@ class Grid(AbstractGrid, ABC):
         print('Finding landmasses ...')
         for cell in self.cells.values():
             if cell.passable and cell.designation not in visited:
-                landmass = self.find_landmass_cells(cell)
+                landmass = self._get_landmass_cells(cell)
                 landmasses.append(landmass)
                 visited.update(cell.designation for cell in landmass)
         landmasses = {
             i: {
                 'landmass_cells': landmass,
-                'coastal_cells': self.find_coastal_cells(landmass)
+                'coastal_cells': self._find_coastal_cells(landmass)
             }
             for i, landmass in enumerate(landmasses)
         }
@@ -634,7 +637,7 @@ class Grid(AbstractGrid, ABC):
         return landmasses, islands
                 
                 
-    def set_landmass_cells(self):
+    def _set_landmass_cells(self):
         for i, landmass in self.landmasses.items():
             for cell in landmass['landmass_cells']:
                 cell.landmass_index = i
@@ -642,7 +645,7 @@ class Grid(AbstractGrid, ABC):
                 cell.is_coastal = True
             
     
-    def find_coastal_cells(self, landmass_cells):
+    def _find_coastal_cells(self, landmass_cells):
         """
         Finds and returns all cells that are adjacent to a landmass.
 
@@ -660,219 +663,6 @@ class Grid(AbstractGrid, ABC):
                     coastal_cells.add(landmass_cell)
         return list(coastal_cells)
     
-    def expand_river_path(self, path):
-        expanded_path = []
-        for i, cell in enumerate(path):
-            cell = self.cells[cell]
-            expanded_path.append(cell)
-            adjacent_cells = cell.adjacent
-            for i, adjacent_cell in enumerate(adjacent_cells):
-                adjacent_cell = self.cells[adjacent_cell]
-                if adjacent_cell not in expanded_path:
-                    expanded_path.append(adjacent_cell)
-        return expanded_path
-
-    def shape_river_path(self, expanded_path):
-        shaped_path = []
-        for i, cell in enumerate(expanded_path):
-            if i % 2 == 0:
-                shaped_path.append(cell)
-            else:
-                previous_cell = expanded_path[i - 1]
-                next_cell = expanded_path[i + 1] if i + 1 < len(expanded_path) else None
-                if next_cell is not None:
-                    direction = self.get_direction(previous_cell, next_cell)
-                    if direction in DIRECTIONS.keys():
-                        shaped_path.append(cell)
-        return shaped_path
-
-    def generate_realistic_river(self, start_cell: Cell):
-        # paths = self.get_river_bends(start_cell, end_cell)
-        path = self.get_river_by_walk(start_cell)
-        path = list(itertools.chain.from_iterable(path))
-        print(f'River steps: {len(path)}')
-        if path is not None:
-            expanded_path = self.expand_river_path(path)
-            # shaped_path = self.shape_river_path(expanded_path)
-            for cell in expanded_path:
-                cell.terrain_str = 'RIVER'
-                cell.terrain_raw = 0.0
-                cell.terrain_int = 9
-                cell.terrain_color = RIVER_BLUE
-                self.dictTerrain[cell.designation] = {
-                    'str': cell.terrain_str, 
-                    'raw': cell.terrain_raw, 
-                    'int': cell.terrain_int, 
-                    'color': cell.terrain_color, 
-                    'cost_in': 2, 
-                    'cost_out': 2
-                    }        
-        else:
-            print("No path found between the start and end cells.")
-
-    def get_river_banks(self):
-        for cell in self.cells.values():
-            if cell.terrain_str == 'RIVER':
-                adjacent_cells = cell.adjacent
-                for adjacent_cell in adjacent_cells:
-                    adjacent_cell = self.cells[adjacent_cell]
-                    if adjacent_cell.terrain_str not in ['RIVER', 'OCEAN', 'SAND']:
-                        adjacent_cell.terrain_str = 'RIVERBANK'
-                        adjacent_cell.terrain_raw = 0.0
-                        adjacent_cell.terrain_int = 8
-                        adjacent_cell.terrain_color = RIVERBANK_BROWN
-                        self.dictTerrain[adjacent_cell.designation] = {
-                            'str': adjacent_cell.terrain_str, 
-                            'raw': adjacent_cell.terrain_raw, 
-                            'int': adjacent_cell.terrain_int, 
-                            'color': adjacent_cell.terrain_color, 
-                            'cost_in': 1, 
-                            'cost_out': 2
-                            }
-
-    def get_river_by_walk(self, start_cell: Cell):
-        river_cells = [start_cell]
-        # branch_cells = []
-        direction = 0
-        for step in range(random.randint(199, 201)):
-            current_cell = self.cells[river_cells[-1]]
-            if adjacent_cells := [
-                adjacent_cell
-                for adjacent_cell in current_cell.adjacent
-                if self.cells[adjacent_cell].passable
-            ]:
-                direction = (
-                    direction
-                    if (step % 50 != 0 or step == 0)
-                    else direction - 2
-                    if direction >= 2
-                    else (direction + 2) % 8
-                )
-                next_cell = adjacent_cells[(direction + (0 if step % 3 else -1)) % len(adjacent_cells)]
-                river_cells.append(next_cell)
-                # if step >= 768:
-                #     # create branch and continue branch with each step
-                #     direction2 = direction + 4 if direction < 3 else direction - 4
-                #     if not branch_cells:
-                #         branch_cells.append(current_cell.adjacent[(direction2 + (0 if step % 4 else random.randint(-2, 2))) % len(adjacent_cells)])
-                #     elif adjacent_cells := [
-                #         adjacent_cell
-                #         for adjacent_cell in self.cells[branch_cells[-1]].adjacent
-                #         if self.cells[adjacent_cell].passable
-                #     ]:
-                #         next_branch_cell = adjacent_cells[(direction2 + (0 if step % 6 else random.randint(-1, 1))) % len(adjacent_cells)]
-                #         branch_cells.append(next_branch_cell)
-
-        return [river_cells]
-                        
-
-    def get_river_ends(self, coastal_cells, length = 64):
-        """
-        Randomly chooses and returns a cell to use as the mouth of a river.
-
-        Args:
-            coastal_cells: List of cells that are adjacent to a landmass.
-
-        Returns:
-            Cell that is the mouth of a river.
-        """
-        print('Finding river ends ...')
-        start = random.choice(coastal_cells)
-        end = self.random_cell(landmass_index=start.landmass_index)
-        # while len(self.get_path(start.designation,end.designation)) != length:
-        #     print(f'Start:{start} End:{end}', end='\r')
-        #     end = self.random_cell(landmass_index=start.landmass_index)
-        print(f'Start:{start} End:{end}')
-        # print(f'Steps from start to end: {len(self.get_path(start.designation, end.designation))}')
-        # print(f'Heading: {self.get_direction(start.designation, end.designation)}')
-        return start.designation, end.designation
-
-    def get_river_bends(self, start, end):
-        """
-        Finds several paths between the ends of river and returns them in a list.
-
-        Args:
-            start: Cell that is the mouth of a river.
-            end: Cell that is the end of a river.
-
-        Returns:
-            List of paths between the ends of a river.
-        """
-        print('Bending river ...')
-        heading = self.get_direction(start, end)
-
-        distance = len(self.get_path(start, end))
-        path_count = distance // 8
-        print(f'Number of bends: {path_count}')
-        main_path = self.get_path(start, end)
-        
-        paths = []
-        def get_bend_directions(heading, path_count):
-            if heading == 'E':
-                bends = [(0,8), (0,-8)]*((path_count // 2)+1) if path_count > 1 else ['NW']
-                return (bend for bend in bends)
-            elif heading == 'NE':
-                bends = [(-8,8), (8,-8)]*((path_count // 2)+1) if path_count > 1 else [(0,-8)]
-                return (bend for bend in bends)
-            elif heading == 'W':
-                bends = [(0,8), (0,-8)]*((path_count // 2)+1) if path_count > 1 else [(8,8)]
-                return (bend for bend in bends)
-            elif heading == 'NW':
-                bends = [(8,8), (-8,-8)]*((path_count // 2)+1) if path_count > 1 else [(0,-8)]
-                return (bend for bend in bends)
-            elif heading == 'N':
-                bends = [(8,0), (-8,0)]*((path_count // 2)+1) if path_count > 1 else [(8,-8)]
-                return (bend for bend in bends)
-            elif heading == 'SW':
-                bends = [(-8,8), (8,-8)]*((path_count // 2)+1) if path_count > 1 else [(0,8)]
-                return (bend for bend in bends)
-            elif heading == 'S':
-                bends = [(8,0), (-8,0)]*((path_count // 2)+1) if path_count > 1 else [(8,8)]
-                return (bend for bend in bends)
-            elif heading == 'SE':
-                bends = [(8,8), (-8,-8)]*((path_count // 2)+1) if path_count > 1 else [(0,8)]
-                return (bend for bend in bends)
-
-        bend_directions = get_bend_directions(heading, path_count)
-        
-        for i in range(path_count):
-            deviation = self.cells[main_path[min(8*i, len(main_path)-9)]]
-            bend_direction = next(bend_directions)
-            
-            bend = self.get_cell_by_relative_indices((deviation.row_index, deviation.col_index), bend_direction)        
-            if not paths:
-                bend_pathA = self.get_path(start, bend)
-                paths.append(bend_pathA)
-                rejoice = main_path[16] 
-                bend_pathB = self.get_path(bend, rejoice)
-                paths.append(bend_pathB)
-            else:
-                bend_pathA = self.get_path(paths[-1][-1], bend)
-                paths.append(bend_pathA)
-                rejoice = main_path[min(8*(i+1),len(main_path)-9)]
-                bend_pathB = self.get_path(bend, rejoice)
-                paths.append(bend_pathB)
-        paths.append(self.get_path(paths[-1][-1], end))
-        return paths
-        
-    def set_rivers(self, river_count):
-        largest_land = 0
-        largest_size = 0
-        for i, landmass in self.landmasses.items():
-            landmass_size = len(landmass['landmass_cells'])
-            if landmass_size > largest_size:
-                largest_land = i
-                largest_size = landmass_size
-        landmass = self.landmasses[largest_land]
-        land_cells = landmass['landmass_cells']
-        start: Cell = random.choice(land_cells)
-        while start.clearance_up < 200 or start.clearance_down < 200 or start.clearance_left < 50 or start.clearance_right < 50:
-            start = random.choice(land_cells)
-        print('Building river ...')
-        self.generate_realistic_river(start.designation)
-        self.get_river_banks()
-        print('done')            
-    # Define the _heuristic function
 
     def _heuristic(self, cella, cellb):
         """Estimates the distance between two cells using Manhattan distance"""
@@ -916,7 +706,7 @@ class Grid(AbstractGrid, ABC):
                     current = came_from[current]
                     path.append(current)
                 path.reverse()
-                return path
+                return (path, cost_so_far[goal])
 
             for next_step in graph[current]:
                 """For each neighbor of the current node, calculate the _cost of the path from the start node to that 
@@ -949,7 +739,7 @@ class Grid(AbstractGrid, ABC):
         return grid_dict
 
 
-class _Neighborhood:
+class GridNeighborhood:
     """A class to represent a neighborhood of cells.
 
     Args:
@@ -966,14 +756,29 @@ class _Neighborhood:
     def __init__(self,
                  grid: _Optional[Grid] = None,
                  focus: _Optional[_Union[Cell, str]] = None,
-                 ):
+                 radius: _Optional[int] = None,
+            ):
         self.grid = grid
         self.focus = focus
-        self.cell_addresses = [self.grid.cells[address] for address in self.focus.adjacent]
-        self.neighbors = [address.occupant for address in self.cell_addresses if address.occupied]
-
+        self.radius = radius if radius is not None else 1
+        self.cell_addresses = self.get_cell_addresses()
+        
     def __call__(self):
         return self.cell_addresses
+
+    def get_cell_addresses(self):
+        addresses = [self.grid.cells[address] for address in self.focus.adjacent]
+        if self.radius == 1:
+            return addresses
+        for _ in range(self.radius):
+            level = []
+            for address in addresses:
+                extension = [self.grid.cells[adj] for adj in address.adjacent if self.grid.cells[adj] not in addresses]
+                level.extend(extension)
+            level = set(level)
+            level = list(level)
+            addresses.extend(level)
+        return addresses
 
     def update(self):
         self.neighbors = [address.occupant for address in self.cell_addresses if address.occupied]

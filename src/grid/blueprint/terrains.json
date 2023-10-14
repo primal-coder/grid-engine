@@ -40,6 +40,14 @@
             "cost_out": 0,
             "char": "_"
         },
+        "HILL": {
+            "raw_max": 0.323,
+            "int": 3,
+            "color": "HILL_GREEN",
+            "cost_in": 1,
+            "cost_out": 0,
+            "char": " "
+        },
         "FOOTHILL": {
             "raw_max": 0.45,
             "int": 3,

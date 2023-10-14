@@ -325,7 +325,7 @@ class Cell(AbstractCell):
     ) -> None:
         self.parentgrid = parentgrid
         if parentgrid is not None:
-            self.gen_terrain = self.parentgrid.gen_terrain
+            self.with_terrain = self.parentgrid.with_terrain
             self.entry = self.parentgrid.blueprint.dictGrid[designation]
 
             self.designation = designation if designation is not None else row + col
@@ -348,7 +348,7 @@ class Cell(AbstractCell):
             self.height = self.size
 
             self.adjacent = self.entry['adjacent']
-            if self.gen_terrain:
+            if self.with_terrain:
                 self._entry_terrain = self.parentgrid.dictTerrain[self.designation]
                 self.terrain_str = self.parentgrid.dictTerrain[self.designation]['str']
                 self.terrain_raw = self.parentgrid.dictTerrain[self.designation]['raw']
@@ -422,6 +422,28 @@ class Cell(AbstractCell):
     def is_coastal(self, value):
         """Sets the is_coastal value of the cell"""
         self._is_coastal = value
+        
+        
+    def __lt__(self, other):
+        return self.cell_index < other.cell_index
+    
+    def __le__(self, other):
+        return self.cell_index <= other.cell_index
+    
+    def __eq__(self, other):
+        return self.cell_index == other.cell_index
+    
+    def __ne__(self, other):
+        return self.cell_index != other.cell_index
+    
+    def __gt__(self, other):
+        return self.cell_index > other.cell_index
+    
+    def __ge__(self, other):
+        return self.cell_index >= other.cell_index
+    
+    def __hash__(self):
+        return hash(self.designation)
         
     def cell_decorator(self, func):
         """Decorator for cell methods that require the cell as an argument"""

@@ -7,7 +7,7 @@ The **Blueprint** package provides classes for generating and manipulating bluep
 ## Usage
 To use this package, import the necessary classes and functions. Here's an example:
 
-```
+```python
 from grid_engine.blueprint.grid_blueprint import BaseGridBlueprint, TerrainGridBlueprint
 
 # Create a base grid blueprint
@@ -21,6 +21,35 @@ base_blueprint.save_blueprint()
 
 # Load a blueprint
 loaded_blueprint = BaseGridBlueprint.load_blueprint(1)
+```
+A command line interface is also provided. To use it, navigate to the src directory and run the following command:
+
+```bash
+python -m grid.blueprint --help
+
+# Output:
+# usage: blueprint [-h] [-i] [-l path/to/grid.json] [-t[-ns noise scale, -no noise octaves, -nr noise roughness] [-r number of rows] [-c number of columns] [-s cell size] [-o path/to/grid.json] [-v]
+
+# Generate a blueprint for a grid.
+
+# options:
+#   -h, --help            show this help message and exit
+#   -i, --interactive     Run an interactive session
+#   -l LOAD, --load LOAD  Load a grid from a file
+#   -t, --terrain         Whether to generate terrain with the grid.
+#   -ns NOISE_SCALE, --noise-scale NOISE_SCALE
+#                         Noise scale
+#   -no NOISE_OCTAVES, --noise-octaves NOISE_OCTAVES
+#                         Noise octaves
+#   -nr NOISE_ROUGHNESS, --noise-roughness NOISE_ROUGHNESS
+#                         Noise roughness
+#   -r ROWS, --rows ROWS  Number of rows in the grid
+#   -c COLUMNS, --columns COLUMNS
+#                         Number of columns in the grid
+#   -s SIZE, --size SIZE  Size of each cell in the grid
+#   -o OUTPUT, --output OUTPUT
+#                         Output file name
+#   -v, --verbose         Verbose output
 ```
 
 # Classes

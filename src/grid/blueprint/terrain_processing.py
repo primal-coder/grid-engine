@@ -16,6 +16,7 @@ _COLORS = {
     'SANDSTONE_GREY': (169, 169, 169, 255),
     'SANDY_GREY': (188, 182, 134),
     'MOUND_GREY': (105, 105, 105, 255),
+    'HILL_GREEN': (91, 101, 91, 255),
     'BASE_GREY': (112, 128, 136, 255),
     'SIDE_GREY': (79, 83, 72, 255),
     'CRAG_GREY': (48, 42, 36, 255),
