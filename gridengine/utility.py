@@ -41,7 +41,6 @@ def generate_images(dimensions, cdata, cell_size, grid_id, animate=False):
             y = cell[1]
             color = cell[2]
             draw.rectangle((x, y, x+(cell_size), y+(cell_size)), fill=color)
-        image = image.filter(ImageFilter.EMBOSS)
         print('Cells drawn.')
     print('Saving grid image ...')
     image.save(f'{saves_dir}{grid_id}/grid.png')

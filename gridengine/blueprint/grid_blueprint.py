@@ -6,7 +6,7 @@ from collections import defaultdict
 from uuid import uuid4
 import pickle
 
-saves_dir = '/devel/fresh/envs/grid_engine/gridengine/grid/saves/'
+saves_dir = '/devel/fresh/envs/grid_engine/gridengine/saves/'
 
 OCEAN_BLUE = _COLORS['OCEAN_BLUE']
 
@@ -30,7 +30,7 @@ levels = ['base', 'terrain']
 # colors
 
 _UNPASSABLE_TERRAIN = [
-        'OCEAN', 'BLOCKED'
+        'OCEAN', 'BLOCKED', 'MOUNTAIN_BASE', 'MOUNTAIN_SIDE', 'MOUNTAIN_CRAG', 'MOUNTAIN_PEAK'
 ]
 
 layer_attributes = {

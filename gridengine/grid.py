@@ -367,13 +367,21 @@ class Grid(AbstractGrid, ABC):
         self.landmass_count = len(self.landmasses)
         self.island_count = len(self.islands)
         self._set_landmass_cells()
+        self.bodies_of_water, self.oceans, self.seas, self.lakes = self._find_bodies_of_water()
+        self.bodies_of_water_count = len(self.bodies_of_water)
+        self.ocean_count = len(self.oceans)
+        self.sea_count = len(self.seas)
+        self.lake_count = len(self.lakes)
+        self._set_water_cells()
         
         for row in self.rows:
             row.row_index = self.rows.index(row)
         for col in self.cols:
             col.col_index = self.cols.index(col)
+        self.river_count = 0
+        self.rivers: list[list[Cell,]] = []
         self._terraformer = Terraformer(self)
-        # self.terraformer.set_rivers(1)
+        self.terraformer.set_rivers(8)
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -799,10 +807,93 @@ class Grid(AbstractGrid, ABC):
         for landmass_cell in landmass_cells:
             for neighbor in landmass_cell.adjacent:
                 neighbor_cell = self.cells[neighbor]
-                if not neighbor_cell.passable:
+                if neighbor_cell.terrain_str == 'OCEAN':
                     coastal_cells.add(landmass_cell)
         return list(coastal_cells)
     
+    def _find_bodies_of_water(self):
+        queue = deque()
+        visited = set()
+        bodies_of_water = []
+        for cell in self.cells.values():
+            if not cell.passable and cell.designation not in visited:
+                body_of_water = self._get_body_of_water(cell)
+                bodies_of_water.append(body_of_water)
+                visited.update(cell.designation for cell in body_of_water)
+        bodies_of_water = {
+            i: {
+                'body_of_water_cells': body_of_water,
+                'coastal_cells': self._find_coastal_cells(body_of_water)
+            }
+            for i, body_of_water in enumerate(bodies_of_water)
+        }
+        oceans = {
+            i: {
+                'ocean_cells': body_of_water['body_of_water_cells'],
+                'coastal_cells': body_of_water['coastal_cells'],
+            }
+            for i, body_of_water in bodies_of_water.items()
+            if len(body_of_water['body_of_water_cells']) > 100
+        }
+        seas = {
+            i: {
+                'sea_cells': body_of_water['body_of_water_cells'],
+                'coastal_cells': body_of_water['coastal_cells'],
+            }
+            for i, body_of_water in bodies_of_water.items()
+            if len(body_of_water['body_of_water_cells']) <= 100
+        }
+        lakes = {
+            i: {
+                'lake_cells': body_of_water['body_of_water_cells'],
+                'coastal_cells': body_of_water['coastal_cells'],
+            }
+            for i, body_of_water in bodies_of_water.items()
+            if len(body_of_water['body_of_water_cells']) < 100
+        }
+        return bodies_of_water, oceans, seas, lakes
+    
+    
+    def _get_body_of_water(self, center_cell):
+        """
+        Finds and returns all cells belonging to the same body of water as the center cell.
+        Uses the passable attribute of each instance of cell to determine if it belongs
+        to the body of water group.
+
+        Args:
+            center_cell: The center cell around which to search for the body of water.
+
+        Returns:
+            List of cells belonging to the same body of water as the center cell.
+        """
+        body_of_water_cells = set()
+        visited = set()
+        queue = deque([center_cell])
+
+        while (
+            queue
+            and len(body_of_water_cells)
+            < self.blueprint.row_count * self.blueprint.col_count
+        ):
+            current_cell = queue.popleft()
+
+            # Check if the current cell is part of the body of water and not visited.
+            if not current_cell.passable and current_cell.designation not in visited:
+                body_of_water_cells.add(current_cell)
+                visited.add(current_cell.designation)
+
+                # Add adjacent water cells to the queue for exploration.
+                for neighbor in current_cell.adjacent:
+                    if neighbor not in visited:
+                        neighbor_cell = self.cells[neighbor]
+                        if not neighbor_cell.passable:
+                            queue.append(neighbor_cell)
+        return list(body_of_water_cells)
+    
+    def _set_water_cells(self):
+        for i, body_of_water in self.bodies_of_water.items():
+            for cell in body_of_water['body_of_water_cells']:
+                cell.body_of_water_index = i
 
     def _heuristic(self, cella, cellb):
         """Estimates the distance between two cells using Manhattan distance"""

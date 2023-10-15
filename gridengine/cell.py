@@ -366,6 +366,7 @@ class Cell(AbstractCell):
             self._in_zone = False
             self._in_region = False
             self._landmass_index = None
+            self._body_of_water_index = None
             self._is_coastal = False
 
             for key, val in self.entry.items():
@@ -412,6 +413,16 @@ class Cell(AbstractCell):
     def landmass_index(self, value):
         """Sets the landmass index of the cell"""
         self._landmass_index = value
+
+    @property
+    def body_of_water_index(self):
+        """Returns the body of water index of the cell"""
+        return self._body_of_water_index
+    
+    @body_of_water_index.setter
+    def body_of_water_index(self, value):
+        """Sets the body of water index of the cell"""
+        self._body_of_water_index = value
 
     @property
     def is_coastal(self):

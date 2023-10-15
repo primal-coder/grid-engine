@@ -6,7 +6,7 @@ import itertools
 import random
 
 RIVER_BLUE = (18, 70, 132, 255)
-RIVERBANK_BROWN = (32, 89, 31, 255)
+RIVERBANK_BROWN = (188, 182, 134, 255)
 
 class Cell(ABC):
     pass
@@ -32,11 +32,24 @@ class Terraformer(ABC):
     
     @property
     def landmasses(self) -> dict:
-        return self.grid.landmasses    
+        return self.grid.landmasses 
+    
+    @property
+    def river_count(self) -> int:
+        return self.grid.river_count
+    
+    @river_count.setter
+    def river_count(self, value: int):
+        self.grid.river_count = value
+        
+    @property
+    def rivers(self) -> list[list[Cell,]]:
+        self.grid.rivers
 
-    def generate_realistic_river(self, start_cell: Cell):
+    def generate_realistic_river(self, start_cell: Cell, end_cell: Cell = None):
         # paths = self.get_river_bends(start_cell, end_cell)
-        path = self.get_river_by_walk(start_cell)
+        print('Getting river cells by walk ...')
+        path = self.get_river_by_walk(start_cell, end_cell)
         path = list(itertools.chain.from_iterable(path))
         print(f'River steps: {len(path)}')
         if path is not None:
@@ -55,6 +68,8 @@ class Terraformer(ABC):
                     'cost_in': 2, 
                     'cost_out': 2
                     }        
+            self.grid.river_count += 1
+            self.grid.rivers.append(expanded_path)
         else:
             print("No path found between the start and end cells.")
 
@@ -90,48 +105,88 @@ class Terraformer(ABC):
                             'cost_out': 2
                             }
 
-    def get_river_by_walk(self, start_cell: Cell):
+    def get_river_by_walk(self, start_cell: Cell, end_cell: Cell = None):
         river_cells = [start_cell]
         # branch_cells = []
         direction = 5
-        for step in range(random.randint(199, 201)):
-            current_cell = self.cells[river_cells[-1]]
-            if adjacent_cells := [
-                adjacent_cell
-                for adjacent_cell in current_cell.adjacent
-                if self.cells[adjacent_cell].passable
-            ]:
-                direction = (
-                    direction
-                    if (step % 20 != 0 or step == 0)
-                    else direction - 2
-                    if direction >= 2
-                    else (direction + 2) % 8
-                )
-                next_cell = adjacent_cells[(direction + (0 if step % 3 else int(random.uniform(-5, 5)))) % len(adjacent_cells)]
+        if end_cell is None:
+            print('Generating random river ...')
+            for step in range(random.randint(199, 201)):
+                current_cell = self.cells[river_cells[-1]]
+                if adjacent_cells := [
+                    adjacent_cell
+                    for adjacent_cell in current_cell.adjacent
+                    if self.cells[adjacent_cell].passable
+                ]:
+                    direction = (
+                        direction
+                        if (step % 20 != 0 or step == 0)
+                        else direction - 2
+                        if direction >= 2
+                        else (direction + 2) % 8
+                    )
+                    next_cell = adjacent_cells[(direction + (0 if step % 3 else int(random.uniform(-5, 5)))) % len(adjacent_cells)]
+                    river_cells.append(next_cell)
+        else:
+            print('Generating river with end designated ...')
+            start_distance = self.grid.get_distance(start_cell, end_cell)
+            current_distance = self.grid.get_distance(start_cell, end_cell)
+            while current_distance > 1:
+                current_cell = self.cells[river_cells[-1]]
+                adjacent_cells = [adjacent_cell for adjacent_cell in current_cell.adjacent if self.cells[adjacent_cell].passable and adjacent_cell not in river_cells]
+                if not adjacent_cells:
+                    river_cells.pop(-1)
+                    break
+                else:
+                    direction = random.randint(0, len(adjacent_cells)-1) if len(adjacent_cells) > 1 else 0
+                    next_cell = adjacent_cells[direction]
+                check_ = 0
+                while self.grid.get_distance(next_cell, end_cell) > current_distance and check_  < 8:
+                    print(f'Current distance: {current_distance} | Current cell: {current_cell.designation} | Next cell: {next_cell}', end='\r')
+                    direction += 1
+                    direction %= len(adjacent_cells)
+                    check_ += 1
+                    next_cell = adjacent_cells[direction]
+                    continue
                 river_cells.append(next_cell)
+                current_distance = self.grid.get_distance(next_cell, end_cell)
+            print(f'Cells in river: {len(river_cells)}')
         return [river_cells]
-                                
+        
     def set_rivers(self, river_count):
         print('Finding start to river ...')
-        largest_land = 0
-        largest_size = 0
-        for i, landmass in self.landmasses.items():
-            landmass_size = len(landmass['landmass_cells'])
-            if landmass_size > largest_size:
-                largest_land = i
-                largest_size = landmass_size
-        landmass = self.landmasses[largest_land]
-        print(f'Found largest landmass: {largest_land} with {largest_size} cells')
-        land_cells = landmass['landmass_cells']
-        coast_cells = landmass['coastal_cells']
-        start: Cell = random.choice(coast_cells)
-        print(f'Start cell: {start}', end = '\r')
-        while start.clearance_down < 50 or start.clearance_right < 50:
-            start = random.choice(coast_cells)
-            print(f'Start cell: {start}', end = '\r')
-        print(f'Start cell: {start}')
-        print('Building river ...')
-        self.generate_realistic_river(start.designation)
-        self.get_river_banks()
-        print('done')            
+        for river in range(river_count):
+            if self.grid.river_count > 0 and river % 3:
+                start: Cell = random.choice(self.grid.rivers[-1])
+                end: Cell = random.choice(self.grid.landmasses[start.landmass_index]['coastal_cells'])
+            else:
+                largest_land = 0
+                largest_size = 0
+                for i, landmass in self.landmasses.items():
+                    landmass_size = len(landmass['landmass_cells'])
+                    if landmass_size > largest_size:
+                        largest_land = i
+                        largest_size = landmass_size
+                landmass = self.landmasses[largest_land]
+                print(f'Found largest landmass: {largest_land} with {largest_size} cells')
+                land_cells = landmass['landmass_cells']
+                coast_cells = landmass['coastal_cells']
+                start: Cell = random.choice(coast_cells)
+                end: Cell = random.choice(coast_cells)
+                print(f'Start cell: {start}, End cell: {end}', end = '\r')
+                while self.grid.get_distance(
+                    start.designation, end.designation
+                ) < 5000 and not [
+                    adjacent_cell
+                    for adjacent_cell in start.adjacent
+                    if self.cells[adjacent_cell].passable
+                ]:
+                    start = random.choice(coast_cells)
+                    end = random.choice(coast_cells)
+                    print(f'Start cell: {start}, End cell: {end}', end = '\r')
+            print(f'Start cell: {start}, End cell: {end}')
+            print('Building river ...')
+            self.generate_realistic_river(start.designation, end.designation)
+            self.get_river_banks()
+            print('done')            
+ 

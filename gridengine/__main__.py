@@ -1,6 +1,7 @@
 import argparse
 import os
 import IPython
+import colorama
 
 parser = argparse.ArgumentParser(prog='grid')
 parser.description = 'Generate a visualized grid from a blueprint. For producing a blueprint, see the blueprint module.'
@@ -48,6 +49,9 @@ if args.blueprint is not None:
         blueprint = Blueprint.load_blueprint(f'{blueprints}{args.blueprint}.pkl',  Blueprint.BaseGridBlueprint)
     print('Success! Blueprint loaded.')
 else:
+    if args.rows*args.columns > 1000000:
+        print(f'{colorama.Fore.RED}WARNING{colorama.Fore.RESET}: The provided parameters will generate a grid composed of {colorama.Fore.LIGHTWHITE_EX}{round((args.rows*args.columns)/1000000, 1)} million{colorama.Fore.RESET} cells. \nThis will consume a significant amount of memory/resources/time. \nIf you have limited amount of memory this could cause your system to hang or crash. \nIf you understand the risks, continue by pressing {colorama.Fore.LIGHTGREEN_EX}ENTER{colorama.Fore.RESET}. Otherwise, press {colorama.Fore.LIGHTRED_EX}CTRL+C{colorama.Fore.RESET} to exit.')
+        input()
     print(f'Generating blueprint with cell size {args.size}, {args.rows} rows and {args.columns} columns. Total_cells: {args.rows*args.columns} ...')
     blueprint = Blueprint.TerrainGridBlueprint(args.size, (args.columns*args.size, args.rows*args.size), noise_scale=args.noise_scale, noise_octaves=args.noise_octaves, noise_roughness=args.noise_roughness)
     print(f'Success! Blueprint generated. Dimensions: {blueprint.grid_dimensions}')
