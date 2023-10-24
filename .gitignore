@@ -160,3 +160,11 @@ cython_debug/
 #.idea/
 src/profiler.txt
 gridengine/grid_feature/grid_feature.py
+
+# Pickle files
+*.pkl
+*.pickle
+
+# png files
+*.png
+
