@@ -1,19 +1,23 @@
 # This file contains utility functions for the grid engine.
 
 # Path: grid-engine/utility.py
+import os as _os
+import sys as _sys
 
+_module_name = 'gridengine'
+_install_dir = _os.path.dirname(_sys.modules[_module_name].__file__)
 # Define the directory for saving generated grids.
-saves_dir = '/devel/fresh/envs/grid_engine/gridengine/saves/'
+saves_dir = f'{_install_dir}/saves/'
 
 # Define the function for generating grid images
 def generate_images(dimensions, cdata, cell_size, grid_id, animate=False):
     print('Generating grid image ...')
     print('Importing pillow ...')
-    from PIL import Image, ImageDraw, ImageFilter
+    from PIL import Image as _Image, ImageDraw as _ImageDraw
     import random
     print('Preparing raw image ...')
-    image = Image.new('RGB', dimensions, (255, 255, 255))
-    draw = ImageDraw.Draw(image)
+    image = _Image.new('RGB', dimensions, (255, 255, 255))
+    draw = _ImageDraw.Draw(image)
     print('Counting cells ...')
     total = len(cdata)
     print(f'Total cells: {total}')
@@ -49,7 +53,7 @@ def generate_images(dimensions, cdata, cell_size, grid_id, animate=False):
     
 # Define the QuietDict class
 
-from typing import Union
+from typing import Union as _Union
 
 class QuietDict:
     def __init__(self):
@@ -58,7 +62,7 @@ class QuietDict:
     def __len__(self):
         return len(self.items)
 
-    def __getitem__(self, key: Union[str, int]):
+    def __getitem__(self, key: _Union[str, int]):
         if isinstance(key, str):
             return self.items[key]
         elif isinstance(key, int):

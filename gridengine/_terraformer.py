@@ -1,21 +1,24 @@
-from __future__ import annotations
+from __future__ import annotations as _annotations
 
-from abc import ABC
-from typing import List, Tuple, Optional, Any, Union, AnyStr
-import itertools
-import random
+from abc import ABC as _ABC
+from typing import Optional as _Optional
+import itertools as _itertools
+import random as _random
 
-RIVER_BLUE = (18, 70, 132, 255)
-RIVERBANK_BROWN = (188, 182, 134, 255)
 
-class Cell(ABC):
+_RIVER_BLUE = (16, 78, 139, 255)
+_RIVERBANK_SAND = (188, 182, 134, 255)
+_RIVERBANK_GRASS = (90, 154, 90, 255)
+
+
+class Cell(_ABC):
     pass
 
-class Grid(ABC):
+class Grid(_ABC):
     pass
 
-class Terraformer(ABC):
-    def __init__(self, grid: Optional[Grid] = None):
+class Terraformer(_ABC):
+    def __init__(self, grid: _Optional[Grid] = None):
         self._grid = grid
         
     @property
@@ -50,7 +53,7 @@ class Terraformer(ABC):
         # paths = self.get_river_bends(start_cell, end_cell)
         print('Getting river cells by walk ...')
         path = self.get_river_by_walk(start_cell, end_cell)
-        path = list(itertools.chain.from_iterable(path))
+        path = list(_itertools.chain.from_iterable(path))
         print(f'River steps: {len(path)}')
         if path is not None:
             expanded_path = self.expand_river_path(path)
@@ -59,7 +62,7 @@ class Terraformer(ABC):
                 cell.terrain_str = 'RIVER'
                 cell.terrain_raw = 0.0
                 cell.terrain_int = 9
-                cell.terrain_color = RIVER_BLUE
+                cell.terrain_color = _RIVER_BLUE
                 self.dictTerrain[cell.designation] = {
                     'str': cell.terrain_str, 
                     'raw': cell.terrain_raw, 
@@ -91,27 +94,30 @@ class Terraformer(ABC):
                 adjacent_cells = cell.adjacent
                 for adjacent_cell in adjacent_cells:
                     adjacent_cell = self.cells[adjacent_cell]
-                    if adjacent_cell.terrain_str not in ['RIVER', 'OCEAN', 'SAND']:
-                        adjacent_cell.terrain_str = 'RIVERBANK'
-                        adjacent_cell.terrain_raw = 0.0
-                        adjacent_cell.terrain_int = 8
-                        adjacent_cell.terrain_color = RIVERBANK_BROWN
-                        self.dictTerrain[adjacent_cell.designation] = {
-                            'str': adjacent_cell.terrain_str, 
-                            'raw': adjacent_cell.terrain_raw, 
-                            'int': adjacent_cell.terrain_int, 
-                            'color': adjacent_cell.terrain_color, 
-                            'cost_in': 1, 
-                            'cost_out': 2
-                            }
+                    if adjacent_cell.terrain_str not in ['RIVER', 'OCEAN', 'SAND', 'MOUND', 'HILL']:
+                        adjacent_cell.terrain_color = _RIVERBANK_SAND
+                    elif adjacent_cell.terrain_str == 'MOUND':
+                        adjacent_cell.terrain_color = _RIVERBANK_GRASS
+                    adjacent_cell.terrain_str = 'RIVERBANK'
+                    adjacent_cell.terrain_raw = 0.0
+                    adjacent_cell.terrain_int = 8
+                    self.dictTerrain[adjacent_cell.designation] = {
+                        'str': adjacent_cell.terrain_str, 
+                        'raw': adjacent_cell.terrain_raw, 
+                        'int': adjacent_cell.terrain_int, 
+                        'color': adjacent_cell.terrain_color, 
+                        'cost_in': 1, 
+                        'cost_out': 2
+                    }
+                        
 
     def get_river_by_walk(self, start_cell: Cell, end_cell: Cell = None):
         river_cells = [start_cell]
         # branch_cells = []
         direction = 5
         if end_cell is None:
-            print('Generating random river ...')
-            for step in range(random.randint(199, 201)):
+            print('Generating _random river ...')
+            for step in range(_random.randint(199, 201)):
                 current_cell = self.cells[river_cells[-1]]
                 if adjacent_cells := [
                     adjacent_cell
@@ -125,7 +131,7 @@ class Terraformer(ABC):
                         if direction >= 2
                         else (direction + 2) % 8
                     )
-                    next_cell = adjacent_cells[(direction + (0 if step % 3 else int(random.uniform(-5, 5)))) % len(adjacent_cells)]
+                    next_cell = adjacent_cells[(direction + (0 if step % 3 else int(_random.uniform(-5, 5)))) % len(adjacent_cells)]
                     river_cells.append(next_cell)
         else:
             print('Generating river with end designated ...')
@@ -138,7 +144,7 @@ class Terraformer(ABC):
                     river_cells.pop(-1)
                     break
                 else:
-                    direction = random.randint(0, len(adjacent_cells)-1) if len(adjacent_cells) > 1 else 0
+                    direction = _random.randint(0, len(adjacent_cells)-1) if len(adjacent_cells) > 1 else 0
                     next_cell = adjacent_cells[direction]
                 check_ = 0
                 while self.grid.get_distance(next_cell, end_cell) > current_distance and check_  < 8:
@@ -157,8 +163,8 @@ class Terraformer(ABC):
         print('Finding start to river ...')
         for river in range(river_count):
             if self.grid.river_count > 0 and river % 3:
-                start: Cell = random.choice(self.grid.rivers[-1])
-                end: Cell = random.choice(self.grid.landmasses[start.landmass_index]['coastal_cells'])
+                start: Cell = _random.choice(self.grid.rivers[-1])
+                end: Cell = _random.choice(self.grid.landmasses[start.landmass_index]['coastal_cells'])
             else:
                 largest_land = 0
                 largest_size = 0
@@ -171,18 +177,18 @@ class Terraformer(ABC):
                 print(f'Found largest landmass: {largest_land} with {largest_size} cells')
                 land_cells = landmass['landmass_cells']
                 coast_cells = landmass['coastal_cells']
-                start: Cell = random.choice(coast_cells)
-                end: Cell = random.choice(coast_cells)
+                start: Cell = _random.choice(coast_cells)
+                end: Cell = _random.choice(coast_cells)
                 print(f'Start cell: {start}, End cell: {end}', end = '\r')
                 while self.grid.get_distance(
                     start.designation, end.designation
-                ) < 5000 and not [
+                ) < len(self.grid.cells)//2000 or not [
                     adjacent_cell
                     for adjacent_cell in start.adjacent
                     if self.cells[adjacent_cell].passable
                 ]:
-                    start = random.choice(coast_cells)
-                    end = random.choice(coast_cells)
+                    start = _random.choice(coast_cells)
+                    end = _random.choice(coast_cells)
                     print(f'Start cell: {start}, End cell: {end}', end = '\r')
             print(f'Start cell: {start}, End cell: {end}')
             print('Building river ...')

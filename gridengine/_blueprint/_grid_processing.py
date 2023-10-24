@@ -1,9 +1,8 @@
-from typing import Optional, List, Tuple, Dict, Any
-import itertools
-import numpy as np
+from typing import Optional as _Optional, List as _List, Tuple as _Tuple, Dict as _Dict, Any as _Any
+import itertools as _itertools
 
 
-def generate_row_strings(row_count: int) -> List[str]:
+def generate_row_strings(row_count: int) -> _List[str]:
     """
     Generate a list of strings representing rows.
 
@@ -13,7 +12,7 @@ def generate_row_strings(row_count: int) -> List[str]:
         row_count (int): The number of rows to generate.
 
     Returns:
-        List[str]: A list of strings representing the generated rows.
+        _List[str]: A list of strings representing the generated rows.
 
     Example:
         ```python
@@ -26,19 +25,19 @@ def generate_row_strings(row_count: int) -> List[str]:
     rows.extend(chr(i + 65) for i in range(26))
     rows.extend(
         chr(i + 97) + chr(j + 97)
-        for i, j in itertools.product(range(26), range(26))
+        for i, j in _itertools.product(range(26), range(26))
     )
     rows.extend(
         chr(i + 65) + chr(j + 97)
-        for i, j in itertools.product(range(1, 26), range(26))
+        for i, j in _itertools.product(range(1, 26), range(26))
     )
     rows.extend(
         chr(i + 97) + chr(j + 97) + chr(k + 97)
-        for i, j, k in itertools.product(range(26), range(26), range(26))
+        for i, j, k in _itertools.product(range(26), range(26), range(26))
     )
     return rows[:row_count]
 
-def generate_column_strings(col_count: int) -> List[str]:
+def generate_column_strings(col_count: int) -> _List[str]:
     """
     Generate a list of strings representing columns.
 
@@ -48,7 +47,7 @@ def generate_column_strings(col_count: int) -> List[str]:
         col_count (int): The number of columns to generate.
 
     Returns:
-        List[str]: A list of strings representing the generated columns.
+        _List[str]: A list of strings representing the generated columns.
 
     Example:
         ```python
@@ -63,28 +62,28 @@ def generate_column_strings(col_count: int) -> List[str]:
     cols.reverse()
     return cols
 
-def get_row_strings(row_count: Optional[int] = None) -> List[str]:
+def get_row_strings(row_count: _Optional[int] = None) -> _List[str]:
     if row_count is None or row_count < 1:
         raise ValueError("row_count must be an integer > 1")
     return generate_row_strings(row_count)
 
-def get_column_strings(col_count: Optional[int] = None) -> List[str]:
+def get_column_strings(col_count: _Optional[int] = None) -> _List[str]:
     if col_count is None or col_count < 1:
         raise ValueError("col_count must be an integer > 1")
     return generate_column_strings(col_count)
 
-def generate_cell_strings(row_strings: List[str], col_strings: List[str]) -> List[str]:
+def generate_cell_strings(row_strings: _List[str], col_strings: _List[str]) -> _List[str]:
     """
     Generate a list of strings representing cells.
 
     This function generates a list of strings representing cells by combining each row string from `row_strings` with each column string from `col_strings`. The resulting list contains all possible combinations of row and column strings.
 
     Args:
-        row_strings (List[str]): A list of strings representing rows.
-        col_strings (List[str]): A list of strings representing columns.
+        row_strings (_List[str]): A list of strings representing rows.
+        col_strings (_List[str]): A list of strings representing columns.
 
     Returns:
-        List[str]: A list of strings representing the generated cells.
+        _List[str]: A list of strings representing the generated cells.
 
     Example:
         ```python
@@ -95,12 +94,12 @@ def generate_cell_strings(row_strings: List[str], col_strings: List[str]) -> Lis
         # Output: ['a1', 'a2', 'a3', 'b1', 'b2', 'b3', 'c1', 'c2', 'c3']
         ```
     """
-    return [r + f for r, f in itertools.product(row_strings, col_strings)]
+    return [r + f for r, f in _itertools.product(row_strings, col_strings)]
 
-def get_cell_strings(row_strings: List[str], col_strings: List[str]) -> List[str]:
+def get_cell_strings(row_strings: _List[str], col_strings: _List[str]) -> _List[str]:
     return generate_cell_strings(row_strings, col_strings)
 
-def get_cell_coordinates(cell_size: int, row_count: int, col_count: int) -> List[Tuple[int, int]]:
+def get_cell_coordinates(cell_size: int, row_count: int, col_count: int) -> _List[_Tuple[int, int]]:
     """
     Get the coordinates of each cell in a grid.
 
@@ -112,7 +111,7 @@ def get_cell_coordinates(cell_size: int, row_count: int, col_count: int) -> List
         col_count (int): The number of columns in the grid.
 
     Returns:
-        List[Tuple[int, int]]: A list of tuples representing the coordinates of each cell.
+        _List[_Tuple[int, int]]: A list of tuples representing the coordinates of each cell.
 
     Example:
         ```python
@@ -129,20 +128,20 @@ def get_cell_coordinates(cell_size: int, row_count: int, col_count: int) -> List
         for num in range(row_count*col_count)
     ]
 
-def get_grid_dict(cell_strings: List[str], row_strings: List[str], col_strings: List[str], cell_coordinates: List[Tuple[int, int]]) -> Dict[str, Any]:
+def get_grid_dict(cell_strings: _List[str], row_strings: _List[str], col_strings: _List[str], cell_coordinates: _List[_Tuple[int, int]]) -> _Dict[str, _Any]:
     """
     Get a dictionary representing a grid.
 
     This function creates a dictionary representing a grid based on the provided `cell_strings`, `row_strings`, `col_strings`, and `cell_coordinates`. Each cell in the grid is represented by a key-value pair in the dictionary, where the key is the cell string and the value is a dictionary containing various properties of the cell.
 
     Args:
-        cell_strings (List[str]): A list of strings representing cells.
-        row_strings (List[str]): A list of strings representing rows.
-        col_strings (List[str]): A list of strings representing columns.
-        cell_coordinates (List[Tuple[int, int]]): A list of tuples representing the coordinates of each cell.
+        cell_strings (_List[str]): A list of strings representing cells.
+        row_strings (_List[str]): A list of strings representing rows.
+        col_strings (_List[str]): A list of strings representing columns.
+        cell_coordinates (_List[_Tuple[int, int]]): A list of tuples representing the coordinates of each cell.
 
     Returns:
-        Dict[str, Any]: A dictionary representing the grid.
+        _Dict[str, _Any]: A dictionary representing the grid.
 
     Example:
         ```python
@@ -175,7 +174,7 @@ def get_grid_dict(cell_strings: List[str], row_strings: List[str], col_strings: 
         } for i, cell in enumerate(cell_strings)
     }
     
-def generate_quadrant_coordinates(row_count: int, col_count: int) -> List[List[Tuple[int, int]]]:
+def generate_quadrant_coordinates(row_count: int, col_count: int) -> _List[_List[_Tuple[int, int]]]:
     """
     Get the coordinates of each quadrant in a grid.
 
@@ -186,7 +185,7 @@ def generate_quadrant_coordinates(row_count: int, col_count: int) -> List[List[T
         col_count (int): The number of columns in the grid.
 
     Returns:
-        List[List[Tuple[int, int]]]: A list of lists representing the coordinates of each quadrant.
+        _List[_List[_Tuple[int, int]]]: A list of lists representing the coordinates of each quadrant.
 
     Example:
         ```python
@@ -210,21 +209,21 @@ def generate_quadrant_coordinates(row_count: int, col_count: int) -> List[List[T
             (quad_x[i+1], quad_y[j+1])[::-1],
             (quad_x[i], quad_y[j+1])[::-1]
         ]
-        for i, j in itertools.product(range(2), range(2))
+        for i, j in _itertools.product(range(2), range(2))
     ]
     
-def get_quadrant_indices(quadrant_coords: List[List[Tuple[int,int]]], grid_dict: Dict[str, Any]) -> Dict[str, Any]:
+def get_quadrant_indices(quadrant_coords: _List[_List[_Tuple[int,int]]], grid_dict: _Dict[str, _Any]) -> _Dict[str, _Any]:
     """
     Assign quadrant indices to cells in a grid.
 
     This function assigns quadrant indices to cells in a grid based on the provided `quadrant_coords` and `grid_dict`. Each cell in the grid is checked against the coordinates of each quadrant, and if the cell falls within a quadrant, its `quadrant_index` property in the `grid_dict` is updated accordingly.
 
     Args:
-        quadrant_coords (List[List[Tuple[int, int]]]): A list of lists representing the coordinates of each quadrant.
-        grid_dict (Dict[str, Any]): A dictionary representing the grid.
+        quadrant_coords (_List[_List[_Tuple[int, int]]]): A list of lists representing the coordinates of each quadrant.
+        grid_dict (_Dict[str, _Any]): A dictionary representing the grid.
 
     Returns:
-        Dict[str, Any]: A dictionary representing the updated grid with assigned quadrant indices.
+        _Dict[str, _Any]: A dictionary representing the updated grid with assigned quadrant indices.
 
     Example:
         ```python
@@ -242,19 +241,19 @@ def get_quadrant_indices(quadrant_coords: List[List[Tuple[int,int]]], grid_dict:
                 grid_dict[cell]['quadrant_index'] = i
     return grid_dict
 
-def generate_adjacency(grid_dict: Dict[str, any], row_count: int, col_count: int) -> Dict[str, Any]:
+def generate_adjacency(grid_dict: _Dict[str, _Any], row_count: int, col_count: int) -> _Dict[str, _Any]:
     """
     Assign adjacent cells to each cell in a grid.
 
     This function assigns adjacent cells to each cell in a grid based on the provided `grid_dict`, `row_count`, and `col_count`. The adjacency is determined based on the position of each cell within the grid. The adjacent cells are stored as a list in the `adjacent` property of each cell in the `grid_dict`.
 
     Args:
-        grid_dict (Dict[str, Any]): A dictionary representing the grid.
+        grid_dict (_Dict[str, _Any]): A dictionary representing the grid.
         row_count (int): The number of rows in the grid.
         col_count (int): The number of columns in the grid.
 
     Returns:
-        Dict[str, Any]: A dictionary representing the updated grid with assigned adjacent cells.
+        _Dict[str, _Any]: A dictionary representing the updated grid with assigned adjacent cells.
 
     Example:
         ```python
@@ -313,17 +312,17 @@ def generate_adjacency(grid_dict: Dict[str, any], row_count: int, col_count: int
     return grid_dict
 
 
-def get_graph(grid_dict: Dict[str, Any]) -> Dict[str, List[str]]:
+def get_graph(grid_dict: _Dict[str, _Any]) -> _Dict[str, _List[str]]:
     """
     Get a graph representation of the grid.
 
     This function creates a graph representation of the grid based on the provided `grid_dict`. Each cell in the grid is treated as a node in the graph, and the adjacent cells are treated as edges connecting the nodes. The graph is returned as a dictionary, where the keys are the cells and the values are lists of adjacent cells.
 
     Args:
-        grid_dict (Dict[str, Any]): A dictionary representing the grid.
+        grid_dict (_Dict[str, _Any]): A dictionary representing the grid.
 
     Returns:
-        Dict[str, List[str]]: A dictionary representing the graph.
+        _Dict[str, _List[str]]: A dictionary representing the graph.
 
     Example:
         ```python
@@ -336,7 +335,7 @@ def get_graph(grid_dict: Dict[str, Any]) -> Dict[str, List[str]]:
         for cell, info in grid_dict.items()
     }
     
-def process_grid(row_count: int, col_count: int, cell_size: int) -> Dict[str, Any]:
+def process_grid(row_count: int, col_count: int, cell_size: int) -> _Dict[str, _Any]:
     """
     Process a grid.
 
@@ -357,7 +356,7 @@ def process_grid(row_count: int, col_count: int, cell_size: int) -> Dict[str, An
         cell_size (int): The size of each cell in the grid.
 
     Returns:
-        Dict[str, Any]: A dictionary containing the processed grid data, including row strings, column strings, cell strings, cell coordinates, grid dictionary, quadrant coordinates, and graph representation.
+        _Dict[str, _Any]: A dictionary containing the processed grid data, including row strings, column strings, cell strings, cell coordinates, grid dictionary, quadrant coordinates, and graph representation.
 
     Example:
         ```python

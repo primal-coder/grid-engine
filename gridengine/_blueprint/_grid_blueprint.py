@@ -1,31 +1,37 @@
-from .grid_processing import *
-from .terrain_processing import *
-from .terrain_processing import _COLORS 
-import numpy as np
-from collections import defaultdict
-from uuid import uuid4
-import pickle
+from ._grid_processing import *
+from ._terrain_processing import *
+from ._terrain_processing import _COLORS 
+import numpy as _np
+from collections import defaultdict as _defaultdict
+from uuid import uuid4 as _uuid4
+import pickle as _pickle
+from typing import Optional as _Optional
+import sys as _sys
+import os as _os
 
-saves_dir = '/devel/fresh/envs/grid_engine/gridengine/saves/'
 
-OCEAN_BLUE = _COLORS['OCEAN_BLUE']
+_module_name = 'gridengine'
+_install_dir = _os.path.dirname(_sys.modules[_module_name].__file__)
+_saves_dir = f'{_install_dir}/saves/'
+
+_OCEAN_BLUE = _COLORS['OCEAN_BLUE']
 
 def save_blueprint(blueprint):
-    import os
-    os.chdir(f'{saves_dir}')
-    if not os.path.exists(f'{blueprint.blueprint_id[-5:]}'):
-        os.makedirs(f'{blueprint.blueprint_id[-5:]}')
+    import os as _os
+    _os.chdir(f'{_saves_dir}')
+    if not _os.path.exists(f'{blueprint.blueprint_id[-5:]}'):
+        _os.makedirs(f'{blueprint.blueprint_id[-5:]}')
     with open(f'{blueprint.blueprint_id[-5:]}/blueprint.{blueprint.blueprint_id[-5:]}.pkl', 'wb') as f:
-        pickle.dump(blueprint, f)
+        _pickle.dump(blueprint, f)
 
 
 def load_blueprint(num: int):
-    import os
-    with open(f'{saves_dir}{os.listdir(saves_dir)[-num]}/blueprint.{os.listdir(saves_dir)[-num][-5:]}.pkl', 'rb') as f:
-        return pickle.load(f)
+    import os as _os
+    with open(f'{_saves_dir}{_os.listdir(_saves_dir)[-num]}/blueprint.{_os.listdir(_saves_dir)[-num][-5:]}.pkl', 'rb') as f:
+        return _pickle.load(f)
 
 
-levels = ['base', 'terrain']
+_levels = ['base', 'terrain']
 
 # colors
 
@@ -33,7 +39,7 @@ _UNPASSABLE_TERRAIN = [
         'OCEAN', 'BLOCKED', 'MOUNTAIN_BASE', 'MOUNTAIN_SIDE', 'MOUNTAIN_CRAG', 'MOUNTAIN_PEAK'
 ]
 
-layer_attributes = {
+_layer_attributes = {
         'base':       [
                 'designation', 'coordinates', 'cell_index', 'rank_index',
                 'file_index', 'quadrant_index', 'adjacent', 'groups'
@@ -47,7 +53,7 @@ layer_attributes = {
 }
 
 
-class AbstractGridBlueprint:
+class _AbstractGridBlueprint:
     """
     Abstract Grid Blueprint class. This is the blueprint for the GridBlueprint class, if you will.
     """
@@ -123,7 +129,7 @@ class AbstractGridBlueprint:
         return self._rank
 
     @rank.setter
-    def rank(self, rank: Optional[list[str]]) -> None:
+    def rank(self, rank: _Optional[list[str]]) -> None:
         """Sets the rank of the grid."""
         self._rank = rank
 
@@ -133,7 +139,7 @@ class AbstractGridBlueprint:
         return self._file
 
     @file.setter
-    def file(self, file: Optional[list[str]]) -> None:
+    def file(self, file: _Optional[list[str]]) -> None:
         """Sets the file of the grid."""
         self._file = file
 
@@ -143,7 +149,7 @@ class AbstractGridBlueprint:
         return self._cell_list
 
     @cell_list.setter
-    def cell_list(self, cell_list: Optional[list[str]]) -> None:
+    def cell_list(self, cell_list: _Optional[list[str]]) -> None:
         """Sets the list of cells."""
         self._cell_list = cell_list
         
@@ -151,7 +157,7 @@ class AbstractGridBlueprint:
     def array(self):
         """Returns the array of cells. The array of cells is a NumPy array of cells with 3 dimensions. The first
         dimension is the column, the second dimension is the row, and the third dimension is the layer. The layers
-        are defined in the `layer_attributes` dictionary. The first layer is the base layer, the second layer is the
+        are defined in the `_layer_attributes` dictionary. The first layer is the base layer, the second layer is the
         terrain layer.
         """
         return self._array
@@ -225,19 +231,19 @@ class AbstractGridBlueprint:
         self.__dict__.update(state)
         
 
-class BaseGridBlueprint(AbstractGridBlueprint):
+class BaseGridBlueprint(_AbstractGridBlueprint):
 
     def __init__(
         self, 
         cell_size: int = None, 
         grid_dimensions: tuple[int, int] = None, 
         grid_id: str = None, 
-        array: np.ndarray = None, 
+        array: _np.ndarray = None, 
         quadrants: dict = None, 
         graph: dict = None
     ) -> None:
         super(BaseGridBlueprint, self).__init__()
-        self.blueprint_id = uuid4().hex if grid_id is None else grid_id
+        self.blueprint_id = _uuid4().hex if grid_id is None else grid_id
         if array and quadrants and graph:
             self._array = array
             self._quadrants = quadrants
@@ -245,7 +251,7 @@ class BaseGridBlueprint(AbstractGridBlueprint):
             self._init_from_array()
         self.cell_size = cell_size if cell_size is not None else 10
         self.grid_dimensions = grid_dimensions if grid_dimensions is not None else (1000, 1000)
-        self._array = np.array(
+        self._array = _np.array(
                 [0 for _ in list(range((self._col_count * self._row_count) * 2))],
                 dtype=type(any),
         ).reshape((self._col_count, self._row_count, 2))
@@ -263,8 +269,8 @@ class BaseGridBlueprint(AbstractGridBlueprint):
         self._assign_array_elements()
                 
     def _init_quadrants(self):
-        quadrants = defaultdict(dict)
-        quad_cells = defaultdict(list)
+        quadrants = _defaultdict(dict)
+        quad_cells = _defaultdict(list)
         for cell, information in self.dictGrid.items():
             quad_cells[information['quadrant_index']].append(cell)
         for quadrant_index, cell_list in quad_cells.items():
@@ -279,7 +285,7 @@ class BaseGridBlueprint(AbstractGridBlueprint):
         terrain_layer = {}
         for cell, information in self.dictGrid.items():
             self.array[information['col_index']][information['row_index']][0] = information
-            cell_layer_dict = {cell: {attrs: None for attrs in layer_attributes['terrain']}}
+            cell_layer_dict = {cell: {attrs: None for attrs in _layer_attributes['terrain']}}
             terrain_layer |= cell_layer_dict
             self.array[information['col_index']][information['row_index']][1] = cell_layer_dict
         self.dictTerrain = terrain_layer
@@ -318,7 +324,7 @@ class TerrainGridBlueprint(BaseGridBlueprint):
                 self.dictTerrain[cell]['raw'] = 0.0
                 self.dictTerrain[cell]['int'] = 9
                 self.dictTerrain[cell]['str'] = 'OCEAN'
-                self.dictTerrain[cell]['color'] = OCEAN_BLUE
+                self.dictTerrain[cell]['color'] = _OCEAN_BLUE
                 self.dictTerrain[cell]['cost_in'] = float('inf')
                 self.dictTerrain[cell]['cost_out'] = float('inf')
                 self.dictTerrain[cell]['char'] = '~'

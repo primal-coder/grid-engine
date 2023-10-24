@@ -2,7 +2,7 @@
 
 ## Description
 
-The **grid-engine** package provides classes for generating and manipulating grids. The grid-engine package is divided into two subpackages: **grid blueprint** and **grid**. The **grid blueprint** subpackage provides classes for generating and manipulating blueprints, which are the foundation of Grid objects created using this module. The **grid** subpackage provides classes for generating and manipulating Grid objects, which are the foundation of the grid engine.
+The **grid-engine** package contains the means for generating and manipulating grids. Gridengine is divided into three submodules: **Grid**, **Cell* and **Blueprint**. 
 
 ## Usage
 

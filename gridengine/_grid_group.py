@@ -1,5 +1,5 @@
-from abc import ABC
-from typing import Union as _Union, Optional
+from abc import ABC as _ABC
+from typing import Union as _Union, Optional as _Optional
 
 class Grid:
     pass
@@ -7,7 +7,7 @@ class Grid:
 class Cell:
     pass
 
-class GridGroup(ABC):
+class GridGroup(_ABC):
     """
     A class to represent a group of cells on the grid.
     """
@@ -79,9 +79,9 @@ class GridNeighborhood:
     """
 
     def __init__(self,
-                 grid: Optional[Grid] = None,
-                 focus: Optional[Union[Cell, str]] = None,
-                 radius: Optional[int] = None,
+                 grid: _Optional[Grid] = None,
+                 focus: _Optional[Union[Cell, str]] = None,
+                 radius: _Optional[int] = None,
             ):
         self.grid = grid
         self.focus = focus

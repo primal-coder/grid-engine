@@ -1,11 +1,8 @@
-from __future__ import annotations
-from collections import deque
+from __future__ import annotations as _annotations
+from collections import deque as _deque
 
-import logging as _logging
-
-from abc import ABC
-from typing import Optional as _Optional, Union as _Union
-import weakref
+from abc import ABC as _ABC
+from typing import Optional as _Optional
 
 _ZONE_COLOR_MAP = {
         'regions' : (255, 0, 0, 255)
@@ -29,16 +26,13 @@ def capture_parentgrid(cls):
 
     return decorator
 
-class Grid(ABC):
+class _Grid(_ABC):
     pass
     
-class AbstractGridObject(ABC):
+class _Neighborhood(_ABC):
     pass
 
-class _Neighborhood(ABC):
-    pass
-
-class AbstractCell:
+class _AbstractCell:
     __slots__ = (
         'parentgrid', 
         'entry',
@@ -311,7 +305,7 @@ def _dynamic_cell_decorator(cell: Cell = None):
         return wrapper
     return decorator
 
-class Cell(AbstractCell):
+class Cell(_AbstractCell):
 
     def __repr__(self):
         return str(f'{self.designation}({self.row_index}, {self.col_index})')
@@ -321,7 +315,7 @@ class Cell(AbstractCell):
             designation: _Optional[str] = None,
             row: _Optional[str] = None,
             col: _Optional[str] = None,
-            parentgrid: _Optional[Grid] = None,
+            parentgrid: _Optional[_Grid] = None,
     ) -> None:
         self.parentgrid = parentgrid
         if parentgrid is not None:
@@ -366,6 +360,7 @@ class Cell(AbstractCell):
             self._in_zone = False
             self._in_region = False
             self._landmass_index = None
+            self._body_of_water_index = None
             self._is_coastal = False
 
             for key, val in self.entry.items():
@@ -412,6 +407,16 @@ class Cell(AbstractCell):
     def landmass_index(self, value):
         """Sets the landmass index of the cell"""
         self._landmass_index = value
+
+    @property
+    def body_of_water_index(self):
+        """Returns the body of water index of the cell"""
+        return self._body_of_water_index
+    
+    @body_of_water_index.setter
+    def body_of_water_index(self, value):
+        """Sets the body of water index of the cell"""
+        self._body_of_water_index = value
 
     @property
     def is_coastal(self):
@@ -487,7 +492,7 @@ class Cell(AbstractCell):
             GridGroup: The diagonal of the cell
         """
         diagonal = GridGroup(self.parentgrid, f'{self.designation}_diagonal', [])
-        queue = deque([self])
+        queue = _deque([self])
         ys = [None, 'up', 'down']
         xs = [None, 'right', 'left']
         y = ys[yaxis]

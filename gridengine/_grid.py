@@ -1,42 +1,45 @@
 from __future__ import annotations
 
-from .terraformer import *
-from .cell import *
-from .blueprint import *
-from .quiet_dict import QuietDict as _QuietDict
+from ._terraformer import *
+from ._cell import _cell as Cell
+from ._blueprint import _grid_blueprint as Blueprint
+from ._utility import QuietDict as _QuietDict
 
-import pickle
-
-import random
-
+import pickle as _pickle
+import random as _random
 import heapq as _heapq
+import numpy as _np
+import os as _os
+import sys as _sys
 
-from pymunk import Vec2d
+from pymunk import Vec2d as _Vec2d
 
-from abc import ABC
+from abc import ABC as _ABC
 
-from uuid import uuid4
+from uuid import uuid4 as _uuid4
 
-from subprocess import call
+from subprocess import call as _call
 
-from collections import deque
+from collections import deque as _deque
 
 from random import choice as _choice
 
 from typing import Optional as _Optional, Union as _Union
 
-RIVER_BLUE = (18, 70, 132, 255)
-RIVERBANK_BROWN = (32, 89, 31, 255)
+_RIVER_BLUE = (18, 70, 132, 255)
+_RIVERBANK_BROWN = (32, 89, 31, 255)
 
-saves_dir = '/devel/fresh/envs/grid-engine/src/grid/saves/'
+_module_name = 'gridengine'
+_install_dir = _os.path.dirname(_sys.modules[_module_name].__file__)
+_saves_dir = f'{_install_dir}/saves/'
 
-DIRECTIONS = {'N': 'up', 'NE': 'up_right', 'E': 'right', 'SE': 'down_right', 'S': 'down', 'SW': 'down_left', 'W': 'left', 'NW': 'up_left'}
+_DIRECTIONS = {'N': 'up', 'NE': 'up_right', 'E': 'right', 'SE': 'down_right', 'S': 'down', 'SW': 'down_left', 'W': 'left', 'NW': 'up_left'}
 
 def clear():
-    call('clear')
+    _call('clear')
 
 def get_vector_direction(pointa, pointb):
-    pointa, pointb = Vec2d(pointa[0], pointa[1]), Vec2d(pointb[0], pointb[1])
+    pointa, pointb = _Vec2d(pointa[0], pointa[1]), _Vec2d(pointb[0], pointb[1])
     angle_degrees = (pointb - pointa).angle_degrees
     angle_degrees = int(angle_degrees)
     angle_degrees %= 360
@@ -73,25 +76,26 @@ def delete_grid(grid: Grid):
     del grid
 
 def save_grid(grid: Grid):
-    import os
-    os.chdir(f'{saves_dir}')
-    if not os.path.exists(f'{grid.grid_id[-5:]}'):
-        os.makedirs(f'{grid.grid_id[-5:]}')
+    import os as _os
+    _os.chdir(f'{_saves_dir}')
+    if not _os.path.exists(f'{grid.grid_id[-5:]}'):
+        _os.makedirs(f'{grid.grid_id[-5:]}')
             
     with open(f'{grid.grid_id[-5:]}/grid.{grid.grid_id[-5:]}.pkl', 'wb') as f:
-        pickle.dump(grid, f)
+        _pickle.dump(grid, f)
         
 def load_grid(num: int):
-    import os
-    os.chdir(f'{saves_dir}')
-    save_dir = f'{os.listdir(".")[num]}'
+    import os as _os
+    _os.chdir(f'{_saves_dir}')
+    save_dir = f'{_os.listdir(".")[num]}'
     with open(f'{save_dir}/grid.{save_dir[-5:]}.pkl', 'rb') as f:
-        return pickle.load(f)
+        return _pickle.load(f)
 
 class Cells(_QuietDict):
     pass
 
-class AbstractGrid(_QuietDict, ABC):
+class _AbstractGrid(_QuietDict, _ABC):
+    """The abstract base class for all grids."""
     _grid_id = None
     _with_terrain = None
     _blueprint = None
@@ -111,116 +115,143 @@ class AbstractGrid(_QuietDict, ABC):
     _last_row = None
     _selection = None
     
-    def __init__(self, blueprint = None, cell_size = None, dimensions = None, noise_scale = None, noise_octaves = None, noise_roughness = None):
-        super(AbstractGrid, self).__init__()
+    def __init__(
+        self, 
+        blueprint = None, 
+        cell_size = None, 
+        dimensions = None, 
+        noise_scale = None, 
+        noise_octaves = None, 
+        noise_roughness = None
+    ) -> None:
+        super(_AbstractGrid, self).__init__()
     
     @property
-    def grid_id(self):
-        return self._grid_id
+    def grid_id(self) -> str:
+        """The unique identifier of the grid."""
+        return self._grid_id if self._grid_id is not None else print('Grid ID not set.')
     
     @grid_id.setter
-    def grid_id(self, value):
-        self._grid_id = value
+    def grid_id(self, grid_id: _Optional[str] = None) -> None:
+        self._grid_id = grid_id if grid_id is not None else _uuid4().hex
         
     @property
-    def with_terrain(self):
+    def with_terrain(self) -> bool:
+        """Whether or not the grid has terrain."""
         return self._with_terrain
     
     @with_terrain.setter
-    def with_terrain(self, value):
-        self._with_terrain = value
+    def with_terrain(self, with_terrain: _Optional[bool] = None) -> None:
+        self._with_terrain = with_terrain if with_terrain is not None else True
         
     @property
-    def blueprint(self):
+    def blueprint(self) -> _Optional[type[Blueprint.AbstractGridBlueprint]]:
+        """The blueprint of the grid."""
         return self._blueprint
     
     @blueprint.setter
-    def blueprint(self, value):
-        self._blueprint = value
+    def blueprint(self, blueprint: _Optional[type[Blueprint.AbstractGridBlueprint]] = None) -> None:
+        if blueprint is not None:
+            self._blueprint = blueprint
         
     @property
-    def terraformer(self):
+    def terraformer(self) -> type[Terraformer]:
+        """The terraformer of the grid."""
         return self._terraformer
         
     @property
-    def grid_array(self):
+    def grid_array(self) -> _np.ndarray:
+        """The grid array of the grid."""
         return self._grid_array
     
     @grid_array.setter
-    def grid_array(self, value):
-        self._grid_array = value
+    def grid_array(self, grid_array: _Optional[_np.ndarray] = None) -> None:
+        self._grid_array = grid_array
         
     @property
-    def dictTerrain(self):
+    def dictTerrain(self) -> _Optional[dict[str, dict[str, Any]]]:
+        """The dictionary of terrain data for the grid. Provided by the blueprint."""
         return self._dictTerrain
     
     @dictTerrain.setter
-    def dictTerrain(self, value):
-        self._dictTerrain = value
+    def dictTerrain(self, dictTerrain: _Optional[dict[str, dict[str, Any]]] = None) -> None:
+        self._dictTerrain = dictTerrain
         
     @property
-    def grid_plan(self):
+    def grid_plan(self) -> _Optional[dict[str, dict[str, Any]]]:
+        """The dictionary of grid data for the grid. Provided by the blueprint."""
         return self._grid_plan
     
     @grid_plan.setter
-    def grid_plan(self, value):
-        self._grid_plan = value
+    def grid_plan(self, grid_plan: _Optional[dict[str, dict[str, Any]]] = None) -> None:
+        self._grid_plan = grid_plan
         
     @property
     def init_cell_size(self):
+        """The initial cell size of the grid."""
         return self._init_cell_size
     
     @init_cell_size.setter
-    def init_cell_size(self, value):
-        self._init_cell_size = value
+    def init_cell_size(self, init_cell_size: _Optional[int] = None) -> None:
+        self._init_cell_size = init_cell_size
         
     @property
-    def cell_size(self):
+    def cell_size(self) -> int:
+        """The cell size of the grid."""
         return self._cell_size
     
     @cell_size.setter
-    def cell_size(self, value):
-        self._cell_size = value
+    def cell_size(self, cell_size: _Optional[int] = None) -> None:
+        self._cell_size = cell_size
         
     @property
-    def cells(self):
+    def cells(self) -> type[Cells]:
+        """A subclass of QuietDict representing all cells in the grid. Keys are cell designations, values are Cell objects."""
         return self._cells
     
     @cells.setter
-    def cells(self, value):
-        self._cells = value
+    def cells(self, cells: _Optional[type[Cells]] = None) -> None:
+        self._cells = cells
         
     @property
-    def rows(self):
+    def rows(self) -> list[list[Cell,]]:
+        """A dynamically generated list of all rows in the grid. The list contains Row objects, which are dynamically generated lists of Cell objects."""
         return self._rows
     
     @rows.setter
-    def rows(self, value):
-        self._rows = value
+    def rows(self, rows: _Optional[list[list[Cell,]]] = None) -> None:
+        self._rows = rows
         
     @rows.deleter
-    def rows(self):
+    def rows(self) -> None:
         del self._rows
         
     @property
-    def cols(self):
+    def cols(self) -> list[list[Cell,]]:
+        """A dynamically generated list of all columns in the grid. The list contains Column objects, which are dynamically generated lists of Cell objects."""
         return self._cols
     
     @cols.setter
-    def cols(self, value):
-        self._cols = value
+    def cols(self, cols: _Optional[list[list[Cell,]]] = None) -> None:
+        self._cols = cols
         
     @cols.deleter
     def cols(self):
         del self._cols
         
     @property
-    def quadrants(self):
+    def quadrants(self) -> list[type[QuietDict]]:
+        """A dynamically generated list of all quadrants in the grid. The list contains Quadrant objects, which are subclasses of QuietDict.
+        The quadrant data can be accessed by quadrant number, e.g. `grid.quadrants.quad0`.
+        
+        grid.quadrants.quad0['cell_count']/[0] returns the number of cells in the quadrant.
+        grid.quadrants.quad0['cells']/[1] returns a list of all cells in the quadrant.
+        """
         return self._quadrants
     
     @quadrants.setter
-    def quadrants(self, value):
-        self._quadrants = value
+    def quadrants(self, quadrants: _Optional[list[type[QuietDict]]] = None) -> None:
+        self._quadrants = quadrants
 
     @quadrants.deleter
     def quadrants(self):
@@ -228,6 +259,7 @@ class AbstractGrid(_QuietDict, ABC):
 
     @property
     def first_col(self):
+        """The first column in the grid."""
         return self._first_col
     
     @first_col.setter
@@ -240,6 +272,7 @@ class AbstractGrid(_QuietDict, ABC):
         
     @property
     def last_col(self):
+        """The last column in the grid."""
         return self._last_col
     
     @last_col.setter
@@ -252,6 +285,7 @@ class AbstractGrid(_QuietDict, ABC):
         
     @property
     def first_row(self):
+        """The first row in the grid."""
         return self._first_row
     
     @first_row.setter
@@ -264,6 +298,7 @@ class AbstractGrid(_QuietDict, ABC):
         
     @property
     def last_row(self):
+        """The last row in the grid."""
         return self._last_row
     
     @last_row.setter
@@ -282,7 +317,8 @@ class AbstractGrid(_QuietDict, ABC):
     def selection(self, value):
         self._selection = value
                 
-class Grid(AbstractGrid, ABC):
+class Grid(_AbstractGrid, _ABC):
+    """The grid object. Contains all cells, rows, columns, and quadrants."""
     def __init__(
             self,
             blueprint: _Optional[type[Blueprint.AbstractGridBlueprint]] = None,
@@ -293,7 +329,19 @@ class Grid(AbstractGrid, ABC):
             noise_octaves: _Optional[int] = None,
             noise_roughness: _Optional[float] = None            
     ):
-        self.grid_id = uuid4().hex if blueprint is None else blueprint.blueprint_id
+        """
+        Initializes the grid object. If no blueprint is provided, a terrain grid blueprint is generated.
+        
+        Args:
+            blueprint (_Optional[type[Blueprint.AbstractGridBlueprint]], optional): The blueprint of the grid. Defaults to None.
+            cell_size (_Optional[int], optional): The size of each cell in the grid. Defaults to None.
+            dimensions (_Optional[tuple[int, int]], optional): The dimensions of the grid. Defaults to None.
+            with_terrain (_Optional[bool], optional): Whether or not the grid has terrain. Defaults to None.
+            noise_scale (_Optional[float], optional): The scale of the Perlin noise. Defaults to None.
+            noise_octaves (_Optional[int], optional): The number of octaves for the Perlin noise. Defaults to None.
+            noise_roughness (_Optional[float], optional): The roughness of the Perlin noise. Defaults to None.
+        """
+        self.grid_id = _uuid4().hex if blueprint is None else blueprint.blueprint_id
         self.with_terrain = with_terrain if with_terrain is not None else True
         self.blueprint = blueprint if blueprint is not None else Blueprint.TerrainGridBlueprint(cell_size, dimensions, self.grid_id, noise_scale, noise_octaves, noise_roughness) if self._with_terrain else BaseGridBlueprint(cell_size, dimensions, self.grid_id)
         self.grid_array = self.blueprint.array
@@ -304,7 +352,7 @@ class Grid(AbstractGrid, ABC):
         self.cell_size = cell_size if cell_size is not None else self.blueprint._cell_size
         self.cells = Cells()
         for cell in self.grid_plan.keys():
-            self.cells[cell] = Cell(cell, parentgrid=self)
+            self.cells[cell] = Cell.Cell(cell, parentgrid=self)
             self.update({cell: self.cells[cell]})
         self.rows = None
         self.cols = None
@@ -314,19 +362,27 @@ class Grid(AbstractGrid, ABC):
         self._last_col = None
         self._first_row = None
         self._last_row = None
-        self.get_first_last()
+        self._get_first_last()
         self.selection = None
         self.landmasses, self.islands = self._find_landmasses()
         self.landmass_count = len(self.landmasses)
         self.island_count = len(self.islands)
         self._set_landmass_cells()
+        self.bodies_of_water, self.oceans, self.seas, self.lakes = self._find_bodies_of_water()
+        self.bodies_of_water_count = len(self.bodies_of_water)
+        self.ocean_count = len(self.oceans)
+        self.sea_count = len(self.seas)
+        self.lake_count = len(self.lakes)
+        self._set_water_cells()
         
         for row in self.rows:
             row.row_index = self.rows.index(row)
         for col in self.cols:
             col.col_index = self.cols.index(col)
+        self.river_count = 0
+        self.rivers: list[list[Cell,]] = []
         self._terraformer = Terraformer(self)
-        # self.terraformer.set_rivers(1)
+        self.terraformer.set_rivers(8)
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -339,19 +395,33 @@ class Grid(AbstractGrid, ABC):
         self.__dict__.update(state)
 
 
-    def get_first_last(self):
+    def _get_first_last(self):
+        """Sets the first and last rows and columns in the grid.
+        The values are collected from the rows and cols attributes by index.
+        """
         self._first_col = self.cols[0]
         self._last_col = self.cols[-1]
         self._first_row = self.rows[0]
         self._last_row = self.rows[-1]
     
     def _set_up(self):
+        """Sets up the grid object."""
         self._set_up_rank()
         self._set_up_file()
         self._set_up_quadrants()
         self._set_up_cells()
 
     def _set_up_rank(self):
+        """Sets up the rank attribute. A `rows` attribute is asigned a type value, with a base of type[list]. 
+        The `rows` attribute is then instantiated. The `rows` attribute is then assigned an attribute for each row in the grid,
+        with a base of type[list]. Each row attribute is then instantiated. Finally, each row attribute is appended to the `rows` object.
+        
+        Effectively, this creates a list of lists, with each list representing a row in the grid. But, each row is accessible by attribute.
+        
+        Example:
+            ```grid.rows.rowa``` returns the first row in the grid.
+            ```grid.rows[0]``` returns the first row in the grid.
+        """
         setattr(self, 'rows', type('rows', (list,), {'blueprint': self.blueprint}))
         exec('self.rows = self.rows()')
         for height, row in enumerate(self.blueprint._rank):
@@ -361,6 +431,16 @@ class Grid(AbstractGrid, ABC):
             exec(f'self.rows.append(self.rows.row{row})')
 
     def _set_up_file(self):
+        """Sets up the file attribute. A `cols` attribute is asigned a type value, with a base of type[list].
+        The `cols` attribute is then instantiated. The `cols` attribute is then assigned an attribute for each column in the grid,
+        with a base of type[list]. Each column attribute is then instantiated. Finally, each col attribute is appended to the `cols` object.
+        
+        Effectively, this creates a list of lists, with each list representing a column in the grid. But, each column is accessible by attribute.
+        
+        Example:
+            ```grid.cols.col00001``` returns the first column in the grid
+            ```grid.cols[0] returns the first column in the grid
+            """
         setattr(self, 'cols', type('cols', (list,), {'blueprint': self.blueprint}))
         exec('self.cols = self.cols()')
         for width, col in enumerate(self.blueprint._file):
@@ -370,11 +450,22 @@ class Grid(AbstractGrid, ABC):
             exec(f'self.cols.append(self.cols.col{col})')
 
     def _set_up_cells(self):
+        """Append each cell to its row and column created in `_set_up_rank` and `_set_up_file` respectively."""
         for d, c in self.cells.items.items():
             getattr(self.rows, f'row{d[:-5]}').append(c)
             getattr(self.cols, f'col{d[-5:]}').append(c)
  
     def _set_up_quadrants(self):
+        """Sets up the quadrants attribute. A `quadrants` attribute is asigned a type value, with a base of type[list].
+        The `quadrants` attribute is then instantiated. The `quadrants` attribute is then assigned an attribute for each quadrant in the grid,
+        with a base of type[QuietDict]. Each quadrant attribute is then instantiated. Each quadrant attribute is appended to the `quadrants` object.
+        Finally, each quadrant attribute is updated with the quadrant data from the blueprint.
+        
+        Example:
+            ```grid.quadrants.quad0``` returns the first quadrant in the grid.
+            ```grid.quadrants.quad0['cell_count']``` returns the number of cells in the first quadrant.
+            ```grid.quadrants.quad0['cells']``` returns a list of all cells in the first quadrant.
+        """
         setattr(self, 'quadrants', type('quadrants', (list,), {}))
         exec('self.quadrants = self.quadrants()')
         for quadrant, info in self.blueprint.quadrants.items():
@@ -383,27 +474,55 @@ class Grid(AbstractGrid, ABC):
             exec(f'self.quadrants.quad{quadrant} = self.quadrants.quad{quadrant}()')
             exec(f'self.quadrants.append(self.quadrants.quad{quadrant})')
             exec(f'self.quadrants.quad{quadrant}.update({info})')
+            
     def get_cell(self, cell_designation: _Optional[str] = None) -> _Optional[Cell]:
+        """Returns a cell object by its designation."""
         try:
             return self.cells[cell_designation]
         except KeyError:
             return None
 
     def get_cell_by_index(self, index: _Optional[int] = None) -> _Optional[Cell]:
+        """Returns a cell object by its index in the cell list."""
         try:
             return self.cells[self.blueprint._cell_list[index]]
         except KeyError:
             return None
 
     def get_cell_by_relative_indices(self, reference: _Optional[tuple[int, int]] = None, indices: _Optional[tuple[int, int]] = None):
-        ref = Vec2d(*reference)
-        ind = Vec2d(*indices)
+        """Returns a cell object by its relative indices from a reference cell.
+        
+        Args:
+            reference (_Optional[tuple[int, int]], optional): The reference cell. Defaults to None.
+            indices (_Optional[tuple[int, int]], optional): The relative indices from the reference cell. Defaults to None.
+            
+        Returns:
+            _Optional[Cell]: The cell object.
+            
+        Example:
+            ```grid.get_cell_by_relative_indices((0, 0), (1, 0))``` returns the cell directly below the reference cell.
+        """
+        ref = _Vec2d(*reference)
+        ind = _Vec2d(*indices)
         r, f = (ref + ind).int_tuple
         r, f = max(0, r), max(0, f)
         r, f = min(r, self.blueprint.row_count - 1), min(f, self.blueprint.col_count - 1)
         return self.grid_array[r, f, 0]['designation']
 
-    def get_nearest_cell_with(self, cella, attr_name, attr_val):
+    def get_nearest_cell_with(self, cella: _Union[str, Cell], attr_name: str, attr_val: Any):
+        """Returns the nearest cell with the specified attribute value.
+        
+        Args:
+            cella (_Union[str, Cell]): The reference cell.
+            attr_name (str): The attribute name.
+            attr_val (Any): The attribute value.
+            
+        Returns:
+            Cell: The nearest cell with the specified attribute value.
+            
+        Example:
+            ```grid.get_nearest_cell_with('a00001', 'passable', True)``` returns the nearest passable cell to cell 'a00001'.
+        """
         nearest = {'cell': None, 'distance': None}
         count = 0
         for cellb in self.cells.values():
@@ -425,12 +544,14 @@ class Grid(AbstractGrid, ABC):
         if len(nearest['cell']) == 1:
             return nearest['cell'][0]
         else:
-            return random.choice(nearest['cell'])
+            return _random._choice(nearest['cell'])
     
     def get_row_by_index(self, index: _Optional[int] = None) -> _Optional[list[Cell,]]:
+        """Returns a row by its index in the row list."""
         return self.blueprint.rank[index]
 
     def get_row_by_height(self, height: _Optional[int] = None) -> _Optional[list[Cell,]]:
+        """Returns a row by its height(y coordinate)."""
         if self.cell_size == 1:
             return height
         for i in range(len(self.rows)):
@@ -438,12 +559,15 @@ class Grid(AbstractGrid, ABC):
                 return self.get_row_by_index(i)
 
     def get_row_by_name(self, row_name: _Optional[str] = None) -> _Optional[list[Cell,]]:
+        """Returns a row by its name."""
         return getattr(self.rows, f'row{row_name}')
     
     def get_col_by_index(self, index: _Optional[int] = None) -> _Optional[list[Cell,]]:
+        """Returns a column by its index in the column list."""
         return self.blueprint.file[index]
     
     def get_col_by_width(self, width: _Optional[int] = None) -> _Optional[list[Cell,]]:
+        """Returns a column by its width(x coordinate)."""
         if self.cell_size == 1:
             return width
         for i in range(len(self.cols)):
@@ -451,21 +575,38 @@ class Grid(AbstractGrid, ABC):
                 return self.get_col_by_index(i)
                     
     def get_col_by_name(self, col_name: _Optional[str] = None) -> _Optional[list[Cell,]]:
+        """Returns a column by its name."""
         return getattr(self.cols, f'col{col_name}')
     
     def get_cell_by_position(self, x: _Optional[int] , y: _Optional[int]) -> _Optional[Cell]:
+        """Returns a cell by its position on the grid."""
         r = self.get_row_by_height(y)
         f = self.get_col_by_width(x)
         return self.get_cell(f'{r}{f}')
     
     def get_cell_by_rank_file(self, rank: _Optional[int], file: _Optional[int]) -> _Optional[Cell]:
-        r = self.get_row_by_index(rank)
-        f = self.get_col_by_index(file)
-        for cell in r:
-            if cell in f:
-                return cell
+        """Returns a cell by its rank and file. Rank and file are the indices of the row and column respectively."""
+        # r = self.get_row_by_index(rank)
+        # f = self.get_col_by_index(file)
+        # for cell in r:
+        #     if cell in f:
+        #         return cell
+        return self.cells[self.grid_array[rank, file, 0]['designation']]
 
     def random_cell(self, attr: _Optional[tuple[str, Any]] = None, attrs: _Optional[tuple[tuple[str, any]]] = None, landmass_index: _Optional[int] = None) -> _Optional[Cell]:
+        """Returns a _random cell. If an attribute is provided, the cell must have that attribute. If multiple attributes are provided,
+        the cell must have all attributes. If a landmass index is provided, the cell must be in that landmass.
+        
+        Args:
+            attr (_Optional[tuple[str, Any]], optional): The attribute. Defaults to None.
+            attrs (_Optional[tuple[tuple[str, any]]], optional): The attributes. Defaults to None.
+            landmass_index (_Optional[int], optional): The landmass index. Defaults to None.
+            
+        Example:
+            ```grid.random_cell(attr=('passable', True))``` returns a _random passable cell.
+            ```grid.random_cell(attrs=(('passable', True), ('terrain_str', 'GRASS')))``` returns a _random passable cell with terrain string 'GRASS'.
+            ```grid.random_cell(landmass_index=0)``` returns a _random cell in the first landmass.
+        """
         if landmass_index is not None:
             cell = _choice(self.landmasses[landmass_index]['landmass_cells'])
         elif attrs is not None:
@@ -481,20 +622,25 @@ class Grid(AbstractGrid, ABC):
         return cell
     
     def random_row(self) -> _Optional[list[Cell,]]:
+        """Returns a _random row."""
         return _choice([getattr(self.rows, f'row{r}') for r in self.blueprint.rank])
 
     def random_col(self) -> _Optional[list[Cell,]]:
+        """Returns a _random column."""
         return _choice([getattr(self.cols, f'col{c}') for c in self.blueprint.file])
 
     def get_adjacent(self, cell_designation: _Optional[str] = None) -> _Optional[list[Cell,]]:
+        """Returns a list of all adjacent cells to the specified cell."""
         return [self.cells[adj] for adj in self.cells[cell_designation].adjacent]
 
-    def get_neighbors(self, cell_designation: _Optional[str] = None) -> _Optional[list[Cell,]]:
-        return [self.cells[adj].occupant for adj in self.cells[cell_designation].adjacent if
-                self.cells[adj].occupant is not None]
+    # def get_neighbors(self, cell_designation: _Optional[str] = None) -> _Optional[list[Cell,]]:
+    #     return [self.cells[adj].occupant for adj in self.cells[cell_designation].adjacent if
+    #             self.cells[adj].occupant is not None]
 
     def get_distance(self, cella: _Optional[str] = None, cellb: _Optional[str] = None,
                      measurement: _Optional[str] = None) -> _Optional[int]:
+        """Returns the distance between two cells. If no measurement is provided, the distance is in units. If measurement is 'cells',
+        the distance is in cells."""
         m = measurement if measurement is not None else "units"
         if m == "units":
             return self._heuristic(cella, cellb)
@@ -506,6 +652,7 @@ class Grid(AbstractGrid, ABC):
             cella: _Optional[_Union[Cell, str]] = None,
             cellb: _Optional[_Union[Cell, str]] = None
     ) -> _Optional[list[Cell,]]:
+        """Returns a list of cells representing the shortest path between two cells and the cost of the path."""
         if isinstance(cella, Cell):
             cella = cella.designation
         if isinstance(cellb, Cell):
@@ -523,6 +670,7 @@ class Grid(AbstractGrid, ABC):
             cella: _Optional[_Union[Cell, str]] = None,
             cellb: _Optional[_Union[Cell, str]] = None
     ) -> _Optional[str]:
+        """Returns the direction from cell A to cell B."""
         if isinstance(cella, Cell):
             cella = cella.designation
         if isinstance(cellb, Cell):
@@ -530,12 +678,13 @@ class Grid(AbstractGrid, ABC):
         cellA = self.cells[cella]
         if cellb in cellA.adjacent:
             cellB = self.cells[cellb]
-            for direction, adjacent in DIRECTIONS.items():
+            for direction, adjacent in _DIRECTIONS.items():
                 if cellB == getattr(cellA, adjacent):
                     return direction
         return get_vector_direction(self.cells[cella].coordinates, self.cells[cellb].coordinates)
 
     def get_area(self, center_cell: _Optional[_Union[Cell, str]] = None, radius: _Optional[int] = None):
+        """Returns a list of cells in the area around the center cell."""
         area_zone = []
 
         if isinstance(center_cell, str):
@@ -578,7 +727,7 @@ class Grid(AbstractGrid, ABC):
         """
         landmass_cells = set()
         visited = set()
-        queue = deque([center_cell])
+        queue = _deque([center_cell])
 
         while (
             queue
@@ -611,7 +760,7 @@ class Grid(AbstractGrid, ABC):
         visited = set()
         print('Finding landmasses ...')
         for cell in self.cells.values():
-            if cell.passable and cell.designation not in visited:
+            if cell.terrain_str != 'OCEAN' and cell.designation not in visited:
                 landmass = self._get_landmass_cells(cell)
                 landmasses.append(landmass)
                 visited.update(cell.designation for cell in landmass)
@@ -647,22 +796,105 @@ class Grid(AbstractGrid, ABC):
     
     def _find_coastal_cells(self, landmass_cells):
         """
-        Finds and returns all cells that are adjacent to a landmass.
+        Finds and returns all cells belonging to a landmass that are adjacent to an unpassable cell.
 
         Args:
             landmass_cells: List of cells belonging to the landmass.
 
         Returns:
-            List of cells that are adjacent to a landmass.
+            List of cells that are adjacent to the ocean.
         """
         coastal_cells = set()
         for landmass_cell in landmass_cells:
             for neighbor in landmass_cell.adjacent:
                 neighbor_cell = self.cells[neighbor]
-                if not neighbor_cell.passable:
+                if neighbor_cell.terrain_str == 'OCEAN':
                     coastal_cells.add(landmass_cell)
         return list(coastal_cells)
     
+    def _find_bodies_of_water(self):
+        queue = _deque()
+        visited = set()
+        bodies_of_water = []
+        for cell in self.cells.values():
+            if cell.terrain_str == 'OCEAN' and cell.designation not in visited:
+                body_of_water = self._get_body_of_water(cell)
+                bodies_of_water.append(body_of_water)
+                visited.update(cell.designation for cell in body_of_water)
+        bodies_of_water = {
+            i: {
+                'body_of_water_cells': body_of_water,
+                'coastal_cells': self._find_coastal_cells(body_of_water)
+            }
+            for i, body_of_water in enumerate(bodies_of_water)
+        }
+        oceans = {
+            i: {
+                'ocean_cells': body_of_water['body_of_water_cells'],
+                'coastal_cells': body_of_water['coastal_cells'],
+            }
+            for i, body_of_water in bodies_of_water.items()
+            if len(body_of_water['body_of_water_cells']) > 100
+        }
+        seas = {
+            i: {
+                'sea_cells': body_of_water['body_of_water_cells'],
+                'coastal_cells': body_of_water['coastal_cells'],
+            }
+            for i, body_of_water in bodies_of_water.items()
+            if len(body_of_water['body_of_water_cells']) <= 100
+        }
+        lakes = {
+            i: {
+                'lake_cells': body_of_water['body_of_water_cells'],
+                'coastal_cells': body_of_water['coastal_cells'],
+            }
+            for i, body_of_water in bodies_of_water.items()
+            if len(body_of_water['body_of_water_cells']) < 100
+        }
+        return bodies_of_water, oceans, seas, lakes
+    
+    
+    def _get_body_of_water(self, center_cell):
+        """
+        Finds and returns all cells belonging to the same body of water as the center cell.
+        Uses the passable attribute of each instance of cell to determine if it belongs
+        to the body of water group.
+
+        Args:
+            center_cell: The center cell around which to search for the body of water.
+
+        Returns:
+            List of cells belonging to the same body of water as the center cell.
+        """
+        body_of_water_cells = set()
+        visited = set()
+        queue = _deque([center_cell])
+
+        while (
+            queue
+            and len(body_of_water_cells)
+            < self.blueprint.row_count * self.blueprint.col_count
+        ):
+            current_cell = queue.popleft()
+
+            # Check if the current cell is part of the body of water and not visited.
+            if not current_cell.passable and current_cell.designation not in visited:
+                body_of_water_cells.add(current_cell)
+                visited.add(current_cell.designation)
+
+                # Add adjacent water cells to the queue for exploration.
+                for neighbor in current_cell.adjacent:
+                    if neighbor not in visited:
+                        neighbor_cell = self.cells[neighbor]
+                        if not neighbor_cell.passable:
+                            queue.append(neighbor_cell)
+        return list(body_of_water_cells)
+    
+    def _set_water_cells(self):
+        for i, body_of_water in self.bodies_of_water.items():
+            for cell in body_of_water['body_of_water_cells']:
+                cell.body_of_water_index = i
 
     def _heuristic(self, cella, cellb):
         """Estimates the distance between two cells using Manhattan distance"""
@@ -709,11 +941,12 @@ class Grid(AbstractGrid, ABC):
                 return (path, cost_so_far[goal])
 
             for next_step in graph[current]:
-                """For each neighbor of the current node, calculate the _cost of the path from the start node to that 
-                neighbor"""
+                # For each neighbor of the current node, 
+                # calculate the _cost of the path from the start node to that neighbor
                 new_cost = cost_so_far[current] + self._cost(current, next_step)
                 if next_step not in cost_so_far or new_cost < cost_so_far[
-                    next_step]:  # If the new path is better than the old path
+                    next_step # If the new path is better than the old path
+                ]:
                     cost_so_far[next_step] = new_cost  # Update the cost of the path to the neighbor
                     priority = new_cost + self._heuristic(goal, next_step)  # Calculate the priority of the neighbor
                     _heapq.heappush(frontier, (priority, next_step))  # Add the neighbor to the frontier
@@ -737,48 +970,3 @@ class Grid(AbstractGrid, ABC):
         grid_dict["cells"] = cells_dict
 
         return grid_dict
-
-
-class GridNeighborhood:
-    """A class to represent a neighborhood of cells.
-
-    Args:
-        grid (Grid): The grid object to which the neighborhood belongs.
-        focus (Cell): The cell object that is the focus of the neighborhood.
-
-    Attributes:
-        grid (Grid): The grid object to which the neighborhood belongs.
-        focus (Cell): The cell object that is the focus of the neighborhood.
-        cell_addresses (list): A list of cell objects that are the addresses of the neighborhood.
-        neighbors (list): A list of objects that are the occupants of the cells in the neighborhood
-    """
-
-    def __init__(self,
-                 grid: _Optional[Grid] = None,
-                 focus: _Optional[_Union[Cell, str]] = None,
-                 radius: _Optional[int] = None,
-            ):
-        self.grid = grid
-        self.focus = focus
-        self.radius = radius if radius is not None else 1
-        self.cell_addresses = self.get_cell_addresses()
-        
-    def __call__(self):
-        return self.cell_addresses
-
-    def get_cell_addresses(self):
-        addresses = [self.grid.cells[address] for address in self.focus.adjacent]
-        if self.radius == 1:
-            return addresses
-        for _ in range(self.radius):
-            level = []
-            for address in addresses:
-                extension = [self.grid.cells[adj] for adj in address.adjacent if self.grid.cells[adj] not in addresses]
-                level.extend(extension)
-            level = set(level)
-            level = list(level)
-            addresses.extend(level)
-        return addresses
-
-    def update(self):
-        self.neighbors = [address.occupant for address in self.cell_addresses if address.occupied]

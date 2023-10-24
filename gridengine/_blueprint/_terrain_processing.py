@@ -1,10 +1,17 @@
-import itertools
-from typing import Dict
-import numpy as np
-import random
-import noise
+import itertools as _itertools
+from typing import Dict as _Dict
+import numpy as _np
+import random as _random
+import noise as _noise
 
-import json
+import json as _json
+
+import os as _os
+import sys as _sys
+
+_module_name = 'gridengine'
+_install_dir = _os.path.dirname(_sys.modules[_module_name].__file__)
+
 
 _COLORS = {
     'OCEAN_BLUE': (16, 78, 139, 255),
@@ -26,10 +33,10 @@ _COLORS = {
 
 def load_terrain() -> type[dict]:
     """
-    Loads the terrain data from the terrain.json file.
+    Loads the terrain data from the terrain._json file.
     """
-    with open('grid/blueprint/terrains.json', 'r') as f:
-        terrain = json.load(f)
+    with open(f'{_install_dir}/_blueprint/terrains.json', 'r') as f:
+        terrain = _json.load(f)
 
     for k, v in terrain['default'].items():
         for tk, tv in v.items():
@@ -37,17 +44,17 @@ def load_terrain() -> type[dict]:
 
     return terrain
 
-TERRAINS = load_terrain()
+_TERRAINS = load_terrain()
 
-DEFAULT_TERRAIN_DICT = TERRAINS['default']
+_DEFAULT_TERRAIN_DICT = _TERRAINS['default']
 
 
-def diamond_square(noise_roughness: float, row_count: int, col_count: int) -> type[np.ndarray]:
+def diamond_square(noise_roughness: float, row_count: int, col_count: int) -> type[_np.ndarray]:
     """
     Executes the diamond-square algorithm to generate a terrain grid.
 
     The diamond-square algorithm generates a grid of values using a combination of diamond and square steps. 
-    It initializes the grid with zeros and sets the corner values to random numbers. 
+    It initializes the grid with zeros and sets the corner values to _random numbers. 
     It then iteratively performs diamond and square steps to calculate the values for the remaining grid cells. 
     The roughness of the terrain is reduced with each iteration. 
     The resulting grid values are normalized and scaled to be in the range [0.001, 0.999].
@@ -73,13 +80,13 @@ def diamond_square(noise_roughness: float, row_count: int, col_count: int) -> ty
     r = row_count
     c = col_count
     # Initialize the grid with zeros using NumPy
-    grid = np.zeros((r, c))
+    grid = _np.zeros((r, c))
 
-    # Set the corner values to random numbers
-    grid[0, 0] = random.uniform(0.0, 1.0)
-    grid[0, c - 1] = random.uniform(0.0, 1.0)
-    grid[r - 1, 0] = random.uniform(0.0, 1.0)
-    grid[r - 1, c - 1] = random.uniform(0.0, 1.0)
+    # Set the corner values to _random numbers
+    grid[0, 0] = _random.uniform(0.0, 1.0)
+    grid[0, c - 1] = _random.uniform(0.0, 1.0)
+    grid[r - 1, 0] = _random.uniform(0.0, 1.0)
+    grid[r - 1, c - 1] = _random.uniform(0.0, 1.0)
     step = c - 1
     while step > 1:
         half = step // 2
@@ -88,7 +95,7 @@ def diamond_square(noise_roughness: float, row_count: int, col_count: int) -> ty
             for j in range(half, c - 1, step):
                 average = (grid[i - half, j - half] + grid[i - half, j] +
                             grid[i, j - half] + grid[i, j]) / 4.0
-                grid[i, j] = average + random.uniform(-1.0, 1.0) * roughness
+                grid[i, j] = average + _random.uniform(-1.0, 1.0) * roughness
         # Square step
         for i in range(0, r - 1, half):
             for j in range((i + half) % step, c - 1, step):
@@ -96,17 +103,17 @@ def diamond_square(noise_roughness: float, row_count: int, col_count: int) -> ty
                             grid[(i + half) % (r - 1), j] +
                             grid[i, (j + half) % (c - 1)] +
                             grid[i, (j - half + c - 1) % (c - 1)]) / 4.0
-                grid[i, j] = average + random.uniform(-1.0, 1.0) * roughness
+                grid[i, j] = average + _random.uniform(-1.0, 1.0) * roughness
                 if i == 0:
                     grid[r - 1, j] = (grid[i, j] + grid[
-                        r - 2, j]) / 2.0 + random.uniform(-1.0, 1.0) * roughness
+                        r - 2, j]) / 2.0 + _random.uniform(-1.0, 1.0) * roughness
         # Reduce the roughness for each iteration
         roughness /= 2.0
         # Reduce the step size for each iteration
         step //= 2
     # Normalize the grid values to be in the range [0, 1]
-    max_value = np.max(grid)
-    min_value = np.min(grid)
+    max_value = _np.max(grid)
+    min_value = _np.min(grid)
     range_value = max_value - min_value
     grid = (grid - min_value) / range_value
     # Scale and shift the normalized values to be in the range [0.001, 0.999]
@@ -114,20 +121,20 @@ def diamond_square(noise_roughness: float, row_count: int, col_count: int) -> ty
 
     return grid
 
-def perlin_noise(row_count: int, col_count: int, noise_scale: int, noise_octaves: int) -> type[np.ndarray]:
+def perlin_noise(row_count: int, col_count: int, noise_scale: int, noise_octaves: int) -> type[_np.ndarray]:
     """
-    Generates Perlin noise terrain data for a grid.
+    Generates Perlin _noise terrain data for a grid.
 
-    The function generates a grid of Perlin noise values using the specified dimensions (`row_count` and `col_count`), 
-    noise scale (`noise_scale`), and number of octaves (`noise_octaves`). 
-    It iterates over each cell in the grid and calculates the Perlin noise value using the `noise.pnoise2` function. 
+    The function generates a grid of Perlin _noise values using the specified dimensions (`row_count` and `col_count`), 
+    _noise scale (`noise_scale`), and number of octaves (`noise_octaves`). 
+    It iterates over each cell in the grid and calculates the Perlin _noise value using the `_noise.pnoise2` function. 
     The generated terrain data is then normalized to be in the range [0, 1].
 
     Args:
         row_count (int): The number of rows in the grid.
         col_count (int): The number of columns in the grid.
-        noise_scale (int): The scale of the Perlin noise.
-        noise_octaves (int): The number of octaves for the Perlin noise.
+        noise_scale (int): The scale of the Perlin _noise.
+        noise_octaves (int): The number of octaves for the Perlin _noise.
 
     Returns:
         numpy.ndarray: The generated terrain data grid.
@@ -143,18 +150,18 @@ def perlin_noise(row_count: int, col_count: int, noise_scale: int, noise_octaves
         ```
     """
 
-    inverse_terrain_data = np.zeros((row_count, col_count))  # type: np.ndarray
-    for y, x in itertools.product(range(col_count), range(row_count)):
-        inverse_terrain_data[x][y] = noise.pnoise2(
+    inverse_terrain_data = _np.zeros((row_count, col_count))  # type: _np.ndarray
+    for y, x in _itertools.product(range(col_count), range(row_count)):
+        inverse_terrain_data[x][y] = _noise.pnoise2(
             y / noise_scale, x / noise_scale,
             noise_octaves
             )
-    return (inverse_terrain_data - np.min(inverse_terrain_data)) / (
-            np.max(inverse_terrain_data) - np.min(inverse_terrain_data)
+    return (inverse_terrain_data - _np.min(inverse_terrain_data)) / (
+            _np.max(inverse_terrain_data) - _np.min(inverse_terrain_data)
     )
     
 
-def generate_terrain_dict(terrain_data_ds: type[np.ndarray], terrain_data_pn: type[np.ndarray], cell_size: int, grid_dict: Dict[str, any]):
+def generate_terrain_dict(terrain_data_ds: type[_np.ndarray], terrain_data_pn: type[_np.ndarray], cell_size: int, grid_dict: _Dict[str, any]):
     terrain_dict = {
         cell: {'str': None, 'raw': None, 'int': None, 'color': None, 'cost_in': None, 'cost_out': None}
         for cell in grid_dict
@@ -165,7 +172,7 @@ def generate_terrain_dict(terrain_data_ds: type[np.ndarray], terrain_data_pn: ty
         terrain_pn_raw = terrain_data_pn[y // cell_size][x // cell_size]
         terrain_ds_raw = terrain_data_ds[r, f]
         terrain_raw = (terrain_pn_raw + terrain_ds_raw) / 1.5
-        for terrain, info in DEFAULT_TERRAIN_DICT.items():
+        for terrain, info in _DEFAULT_TERRAIN_DICT.items():
             if terrain_raw <= info['raw_max']:
                 terrain_dict[cell]['str'] = terrain
                 terrain_dict[cell]['raw'] = terrain_raw
@@ -177,7 +184,7 @@ def generate_terrain_dict(terrain_data_ds: type[np.ndarray], terrain_data_pn: ty
                 break
     return terrain_dict
 
-def process_noise(noise_scale: int, noise_octaves: int, noise_roughness: float, row_count: int, col_count: int, cell_size: int, grid_dict: Dict[str, any]):
+def process_noise(noise_scale: int, noise_octaves: int, noise_roughness: float, row_count: int, col_count: int, cell_size: int, grid_dict: _Dict[str, any]):
     terrain_data_ds = diamond_square(noise_roughness, row_count, col_count)
     terrain_data_pn = perlin_noise(row_count, col_count, noise_scale, noise_octaves)
     return generate_terrain_dict(
