@@ -108,7 +108,7 @@ Will produce the following output:
 
 The following image is the result of the above command:
 
-![grid](src/grid/saves/ee9e4/grid.png)
+![grid](grid_engine/_saves/ee9e4/grid.png)
 *The river generation algorithm is not perfect. I am currently working on improving it.*
 
 The above command will also produce the following files:
