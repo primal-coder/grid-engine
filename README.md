@@ -2,30 +2,38 @@
 
 ## Description
 
-The **grid-engine** package contains the means for generating and manipulating grids. Gridengine is divided into three submodules: **Grid**, **Cell* and **Blueprint**. 
+**gridengine** is a framework for generating and manipulating grids. It provides a number of classes and functions for generating and manipulating grids. Each grid is composed of [Cell](#Cell) objects and is defined by a [Blueprint](#Blueprint). A grid can be generated from a blueprint, loaded from a file, or created manually. It can also be pickled for later use. It can be rendered as a 2D image, an animated GIF or an ASCII string. Grids provide a number of relevant methods for pathfinding, cell manipulation, and more.
+
+## Installation
+
+To install **gridengine**, run the following command:
+
+    ```bash
+    pip install grid_engine
+    ```
 
 ## Usage
 
-To use this package, import the necessary classes and functions. Here's an example:
+To use **gridengine** you can import any number of the submodules and utilize its respective features.
 
-```python
-import gridengine
-from gridengine import grid
-
-# Create a grid
-grid = grid.Grid(cell_size=10, grid_dimensions=(1000, 1000))
-
-# Save a grid
-grid.save_grid()
-
-# Load a grid
-loaded_grid = grid.Grid.load_grid(1)
-```
+    ```python
+    import gridengine
+    from gridengine import grid
+    
+    # Create a grid
+    grid = grid.Grid(cell_size=10, grid_dimensions=(1000, 1000))
+    
+    # Save a grid
+    grid.save_grid()
+    
+    # Load a grid
+    loaded_grid = grid.Grid.load_grid(1)
+    ```
 
 grid-engine also provides a command line interface. To use it, run the following command:
 
 ```bash
-python -m gridengine --help
+python -m grid_engine --help
 
 # Output:
 # usage: gridengine [-h] [-i] [-b BLUEPRINT] [--ascii] [-l LOAD] [-t] [-ns NOISE_SCALE] [-no NOISE_OCTAVES] [-nr NOISE_ROUGHNESS] [-r ROWS] [-c COLUMNS] [-s SIZE] [-S] [-T TYPE] [-v]
@@ -64,11 +72,11 @@ The following examples demonstrate the use of the grid-engine package.
 The following command:
 
 ```bash
-python -m gridengine -v -S -t -ns 580 -no 93 -nr 0.47 -r 450 -c 800 -s 2 
+python -m grid_engine -v -S -t -ns 580 -no 93 -nr 0.47 -r 450 -c 800 -s 2 
 ```
 
 Will produce the following output:
-    
+
     ```bash
     Generating blueprint with cell size 2, 450 rows and 800 columns. Total_cells: 360000 ...
     Success! Blueprint generated. Dimensions: (1600, 900)

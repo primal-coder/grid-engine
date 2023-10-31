@@ -1,0 +1,69 @@
+{
+    "default": {
+        "GULCH0": {
+            "raw_max": 0.41,
+            "int": 3,
+            "color": "GRASS_GREEN",
+            "cost_in": 2,
+            "cost_out": 2,
+            "char": " "
+        },
+
+        "FOOTHILL": {
+            "raw_max": 0.45,
+            "int": 3,
+            "color": "FOOTHILL_GREEN",
+            "cost_in": 2,
+            "cost_out": 0,
+            "char": " "
+        },
+        "GRASS0": {
+            "raw_max": 0.475,
+            "int": 4,
+            "color": "GRASS_GREEN",
+            "cost_in": 1,
+            "cost_out": 1,
+            "char": " "
+        },
+        "GRASS1": {
+            "raw_max": 0.482,
+            "int": 4,
+            "color": "PLAIN_GREEN",
+            "cost_in": 1,
+            "cost_out": 1,
+            "char": " "
+        },
+        "BEACH_GRASS": {
+            "raw_max": 0.491,
+            "int": 4,
+            "color": "BEACH_GREEN",
+            "cost_in": 1,
+            "cost_out": 0,
+            "char": " "
+        },
+        "SANDSTONE": {
+            "raw_max": 0.505,
+            "int": 4,
+            "color": "SANDSTONE_GREY",
+            "cost_in": 1,
+            "cost_out": 1,
+            "char": " "
+        },
+        "SAND": {
+            "raw_max": 0.517,
+            "int": 5,
+            "color": "SANDY_GREY",
+            "cost_in": 1.25,
+            "cost_out": 1,
+            "char": "."
+        },
+        "SEASHELL": {
+            "raw_max": 0.518,
+            "int": 6,
+            "color": "SEASHELL_WHITE",
+            "cost_in": 1.5,
+            "cost_out": 1,
+            "char": ","
+        }
+    }
+}
