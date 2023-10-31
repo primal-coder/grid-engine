@@ -159,12 +159,8 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 src/profiler.txt
-gridengine/grid_feature/grid_feature.py
 
 # Pickle files
 *.pkl
 *.pickle
-
-# png files
-*.png
 
