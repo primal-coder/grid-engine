@@ -27,13 +27,23 @@ def generate_images(dimensions, cdata, cell_size, grid_id, animate=False):
                 print(f'Drawing cells {count+1}-{min(count+100, total)} ... {round(((count+100)/total)*100)}%', end='\r')
                 x = cell[0]
                 y = cell[1]
-                color = cell[2]
+                r, g, b = list(cell[1][:])
+                color = (r, g, b)
                 draw.rectangle((x, y, x+(cell_size), y+(cell_size)), fill=color)
-                
+
             frames.append(image.copy())
 
         print('Saving grid animation ...')
-        frames[0].save(f'{saves_dir}{grid_id}/grid.gif', format='GIF', append_images=frames[1:], save_all=True, duration=1, loop=0)
+        frames[0].save(f'{grid_id}/grid.gif', format='GIF', append_images=frames[1:], save_all=True, duration=0.25, loop=0)
+        image = Image.open(f'{grid_id}/grid.gif')
+        try:
+            while True:
+                try: 
+                    image.seek(image.tell()+1)
+                except EOFError:
+                    image.seek(0)
+        except KeyboardInterrupt:
+            image.close()
     else:
         for i, cell in enumerate(cells):
             print(f'Drawing cells {round((i/total)*100)}%', end='\r')
@@ -43,7 +53,7 @@ def generate_images(dimensions, cdata, cell_size, grid_id, animate=False):
             draw.rectangle((x, y, x+(cell_size), y+(cell_size)), fill=color)
         print('Cells drawn.')
     print('Saving grid image ...')
-    image.save(f'{saves_dir}{grid_id}/grid.png')
+    image.save(f'{grid_id}/grid.png')
     print(f'Grid ID: {grid_id}')
     
     

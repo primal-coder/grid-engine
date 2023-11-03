@@ -27,12 +27,13 @@ _COLORS = {
     'SNOW_WHITE': (253, 245, 245, 255)
 }
 
+install_dir = os.path.abspath(os.path.dirname(__file__))
 
 def load_terrain() -> type[dict]:
     """
     Loads the terrain data from the terrain.json file.
     """
-    with open(f'{os.path.abspath(os.path.curdir)}/grid_engine/_blueprint/terrains.json', 'r') as f:
+    with open(f'{install_dir}/terrains.json', 'r') as f:
         terrain = json.load(f)
 
     for k, v in terrain['default'].items():

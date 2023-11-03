@@ -1,9 +1,8 @@
-from .__log__ import logger, log_method, log_class
-
+from abc import ABC
 from typing import Optional, Any, AnyStr
 from uuid import uuid4
 
-class AbstractGridObject:
+class AbstractGridObject(ABC):
     _object_id = None
     _name = None
     _grid = None
@@ -74,5 +73,3 @@ class GridObject(BaseGridObject):
     def __init__(self, grid: Any, name: AnyStr, object_type: AnyStr, cell: AnyStr = None):
         super(GridObject, self).__init__(grid, name, object_type, cell)
         self._object_type = object_type
-        
-            

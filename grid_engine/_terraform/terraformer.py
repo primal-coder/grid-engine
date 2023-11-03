@@ -177,7 +177,7 @@ class Terraformer(ABC):
                 direction = random.randint(0, len(adjacent_cells)-1) if len(adjacent_cells) > 1 else 0
                 next_cell = adjacent_cells[direction]
             check_ = 0
-            while self.grid.get_distance(next_cell, end_cell) > current_distance + 2 and check_  < 8:
+            while self.grid.get_distance(next_cell, end_cell) > current_distance and check_  < 8:
                 print(f'Current distance: {current_distance} | Current cell: {current_cell.designation} | Next cell: {next_cell}', end='\r')
                 direction += 1
                 direction %= len(adjacent_cells)
@@ -223,7 +223,7 @@ class Terraformer(ABC):
                 print(f'Start cell: {start}, End cell: {end}', end = '\r')
                 while self.grid.get_distance(
                     start.designation, end.designation, 'cells'
-                ) < 1000 and not [
+                ) < 250 or not [
                     adjacent_cell
                     for adjacent_cell in start.adjacent
                     if self.cells[adjacent_cell].passable

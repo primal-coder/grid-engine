@@ -38,7 +38,7 @@ RIVER_BLUE = (18, 70, 132, 255)
 RIVERBANK_BROWN = (32, 89, 31, 255)
 
 _logger.gridengine('Setting saves directory ...')
-saves_dir = f'{_os.path.abspath(_os.path.curdir)}/begingine/components/gridengine/saves/'
+saves_dir = f'{_os.path.abspath(_os.path.curdir)}/grid_engine/_saves/'
 _logger.gridengine(f'Saves directory set to {saves_dir}')
 DIRECTIONS = {
         'N': 'up',
@@ -91,17 +91,21 @@ def extract_cell_data(grid):
 
 
 def save_grid(grid: Grid):
-    _os.chdir(f'{saves_dir}')
-    if not _os.path.exists(f'{grid.grid_id[-5:]}'):
-        _os.makedirs(f'{grid.grid_id[-5:]}')
+    if not _os.path.exists(f'{saves_dir}{grid.grid_id[-5:]}'):
+        _os.makedirs(f'{saves_dir}{grid.grid_id[-5:]}')
             
-    with open(f'{grid.grid_id[-5:]}/grid.{grid.grid_id[-5:]}.pkl', 'wb') as f:
+    with open(f'{saves_dir}{grid.grid_id[-5:]}/grid.{grid.grid_id[-5:]}.pkl', 'wb') as f:
         _pickle.dump(grid, f)
 
 
-def load_grid(num: int):
-    _os.chdir(f'{saves_dir}')
-    save_dir = f'{_os.listdir(".")[num]}'
+def load_grid(num: _Optional[int] = None, grid_id: _Optional[str] = None):
+    if num is not None: # load by index
+        save_dir = f'{_os.listdir(saves_dir)[num]}'
+    elif grid_id is not None: # load by grid ID
+        save_dir = f'{saves_dir}{grid_id[-5:]}'
+    else:
+        raise ValueError('No save number or grid ID provided.')
+    
     with open(f'{save_dir}/grid.{save_dir[-5:]}.pkl', 'rb') as f:
         return _pickle.load(f)
 
@@ -409,6 +413,9 @@ class Grid(AbstractGrid, _ABC):
         optional): The number of octaves for the Perlin noise. Defaults to None. noise_roughness (_Optional[float],
         optional): The roughness of the Perlin noise. Defaults to None.
         """
+        if dimensions is not None and (dimensions[0] * dimensions[1] > 1000000) and not self._size_warning():
+            return
+            
         self.grid_id = _uuid4().hex if blueprint is None else blueprint.blueprint_id
         self.with_terrain = with_terrain if with_terrain is not None else True
         self.blueprint = blueprint if blueprint is not None else Blueprint.TerrainGridBlueprint(cell_size, dimensions, self.grid_id, noise_scale, noise_octaves, noise_roughness) if self._with_terrain else Blueprint.BaseGridBlueprint(cell_size, dimensions, self.grid_id)
@@ -460,6 +467,11 @@ class Grid(AbstractGrid, _ABC):
 
         # self.town = GridZone(self, 'Town', 'town', self.random_cell(attr=('passable', True)), (45, 45, 45), 2)
 
+    def _size_warning(self, cell_dimensions):
+        import colorama
+        quit = input(f'{colorama.Fore.RED}WARNING{colorama.Fore.RESET}: The provided parameters will generate a grid composed of {colorama.Fore.LIGHTWHITE_EX}{round((args.rows*args.columns)/1000000, 1)} million{colorama.Fore.RESET} cells. \nThis will consume a significant amount of memory/resources/time. \nIf you have limited amount of memory this could cause your system to hang or crash. \nIf you understand the risks, continue by pressing {colorama.Fore.LIGHTGREEN_EX}ENTER{colorama.Fore.RESET}. Otherwise, press {colorama.Fore.LIGHTRED_EX}CTRL+C{colorama.Fore.RESET} to exit.')
+        return quit == ''
+    
     def __getstate__(self):
         state = self.__dict__.copy()
         nonattrs = ['_cols', '_rows', '_quadrants', '_first_col', '_first_row', '_last_col', '_last_row']

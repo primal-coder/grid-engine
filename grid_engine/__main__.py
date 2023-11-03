@@ -82,7 +82,7 @@ cdata = extract_cell_data(grid)
 grid_id = grid.grid_id[-5:]
 height = grid.blueprint.grid_height
 width = grid.blueprint.grid_width
-delete_grid(grid)
+del grid
     
 generate_images((width, height), cdata, args.size, grid_id)
     

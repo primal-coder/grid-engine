@@ -756,7 +756,7 @@ class Cell(AbstractCell, metaclass=CellEventMeta):
         if self.entry_object[f'{otype}'] is None:
             self.entry_object[f'{otype}'] = {}
         self.entry_object[f'{otype}'].update({grid_object.name: grid_object})
-        self.parentgrid.dictObject[self.col_index][self.row_index][1] = self.entry_object
+        self.parentgrid.dictObject[self.col_index][self.row_index] = self.entry_object
         if otype == 'items':
             if hasattr(grid_object, 'tile_color') and getattr(self.parentgrid, 'scene', None) is not None:
                 self.overlay_color = grid_object.tile_color
@@ -777,7 +777,7 @@ class Cell(AbstractCell, metaclass=CellEventMeta):
         if self.entry_object[f'{otype}'][grid_object.name] is not None:
             self.entry_object[f'{otype}'][grid_object.name] = None
             del self.entry_object[f'{otype}'][grid_object.name]
-            self.parentgrid.dictObject[self.col_index][self.row_index][1] = self.entry_object
+            self.parentgrid.dictObject[self.col_index][self.row_index] = self.entry_object
             if otype == 'structures':
                 self.on_destruct()
                 if hasattr(grid_object, 'tile_color') and getattr(self.parentgrid, 'scene', None) is not None:
@@ -815,7 +815,7 @@ class Cell(AbstractCell, metaclass=CellEventMeta):
         if self.entry_unit[f'{utype}'] is None:
             self.entry_unit[f'{utype}'] = {}
         self.entry_unit[f'{utype}'].update({unit.name: unit})
-        self.parentgrid.dictUnit[self.col_index][self.row_index][2] = self.entry_unit
+        self.parentgrid.dictUnit[self.col_index][self.row_index] = self.entry_unit
         
         
     def remove_unit(self, unit):
