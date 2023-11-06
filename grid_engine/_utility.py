@@ -1,60 +1,100 @@
 # This file contains utility functions for the grid engine.
-
+import os
 # Path: grid-engine/utility.py
 
+CWD = os.getcwd()
+if not os.path.exists(f'{CWD}/saves/'):
+    os.mkdir(f'{CWD}/saves/')
+
+SAVES_DIR = f'{CWD}/saves/'
+
+def get_grid_dir(grid_id):
+    """
+    Creates a directory for saving generated grids.
+    """
+    if not os.path.exists(f'{SAVES_DIR}{grid_id}/'):
+        os.mkdir(f'{SAVES_DIR}{grid_id}/')
+    return f'{SAVES_DIR}{grid_id}/'
 # Define the directory for saving generated grids.
-saves_dir = 'grid_engine/_saves/'
 
 # Define the function for generating grid images
 def generate_images(dimensions, cdata, cell_size, grid_id, animate=False):
     print('Generating grid image ...')
     print('Importing pillow ...')
-    from PIL import Image, ImageDraw, ImageFilter
+
+    from PIL import Image, ImageDraw, ImageShow
     import random
     print('Preparing raw image ...')
     image = Image.new('RGB', dimensions, (255, 255, 255))
     draw = ImageDraw.Draw(image)
+    w, h, s = dimensions[0], dimensions[1], cell_size
+    total_cell_count = (w//s)*(h//s)
     print('Counting cells ...')
-    total = len(cdata)
-    print(f'Total cells: {total}')
-    cells = cdata
+    print(f'Total cells: {total_cell_count}')
+    cell_info = cdata
     print('Shuffling cells ...')
-    random.shuffle(cells)
+    x_data = cell_info['X']
+    y_data = cell_info['Y']
+    categories = cell_info['CATEGORY']
+    colors = cell_info['COLOR']
+    coordinates = list(zip(x_data, y_data))
+    cells = list(zip(coordinates, colors, categories))
+
     if animate:
         frames = []
-        for count in range(0, total, 100):
-            for cell in zip(range(100), cells[count:count+100]):
-                print(f'Drawing cells {count+1}-{min(count+100, total)} ... {round(((count+100)/total)*100)}%', end='\r')
-                x = cell[0]
-                y = cell[1]
-                r, g, b = list(cell[1][:])
-                color = (r, g, b)
-                draw.rectangle((x, y, x+(cell_size), y+(cell_size)), fill=color)
-
+        # First let's draw the whole grid as a base layer with the background color (16, 78, 139, 255).
+        # 500 cells at a time.
+        coords = coordinates
+        random.shuffle(coords)
+        for count in range(0, total_cell_count, total_cell_count//60):
+            for coord in zip(range(total_cell_count//60), coords[count:count+(total_cell_count//60)]):
+                i, coord = coord
+                x, y = coord
+                color = (16, 78, 139, 255)
+                draw.rectangle((x, y, x+cell_size, y+cell_size), fill=color)
             frames.append(image.copy())
-
+        print('Base cells drawn.')
+        # Now let's add a brief period of time before we start drawing more
+        frames.extend(image.copy() for _ in range(30))
+        # Now let's draw the cells in the order of their categories
+        for category in ["GRASS", "SAND"]:
+            print(f'Drawing cells of category {category} ...')
+            cat_count = categories.count(category)
+            cat_cells = [cell for cell in cells if cell[2] == category or (category == 'GRASS' and cell[2] == 'RIVER')]
+            random.shuffle(cat_cells)
+            for count in range(0, cat_count, cat_count//60):
+                for cell in zip(range(cat_count//60), cat_cells[count:count+(cat_count//60)]):
+                    i, cell = cell
+                    x, y = cell[0]
+                    color = cell[1]
+                    ctgry = cell[2]
+                    draw.rectangle((x, y, x+cell_size, y+cell_size), fill=color if ctgry == category else (90, 154, 90, 255))
+                frames.append(image.copy())
+        river_count = categories.count('RIVER')
+        river_cells = [cell for cell in cells if cell[2] == 'RIVER']
+        for count in range(0, river_count, river_count//10):
+            for cell in zip(range(river_count//10), river_cells[count:count+(river_count//10)]):
+                i, cell = cell
+                x, y = cell[0]
+                color = cell[1]
+                draw.rectangle((x, y, x+cell_size, y+cell_size), fill=color)
+            frames.append(image.copy())
         print('Saving grid animation ...')
-        frames[0].save(f'{grid_id}/grid.gif', format='GIF', append_images=frames[1:], save_all=True, duration=0.25, loop=0)
-        image = Image.open(f'{grid_id}/grid.gif')
-        try:
-            while True:
-                try: 
-                    image.seek(image.tell()+1)
-                except EOFError:
-                    image.seek(0)
-        except KeyboardInterrupt:
-            image.close()
+        grid_id = grid_id[-5:]
+        grid_dir = get_grid_dir(grid_id)
+        frames[0].save(f'{grid_dir}grid.gif', format='GIF', append_images=frames[1:], save_all=True, duration=0.001, loop=0)
+        print(f'grid.gif saved to {grid_dir}.')
     else:
         for i, cell in enumerate(cells):
-            print(f'Drawing cells {round((i/total)*100)}%', end='\r')
+            print(f'Drawing cells         {round((i/total_cell_count)*100)}%', end='\r')
             x = cell[0]
             y = cell[1]
             color = cell[2]
-            draw.rectangle((x, y, x+(cell_size), y+(cell_size)), fill=color)
-        print('Cells drawn.')
+            draw.rectangle((x, y, x+cell_size, y+cell_size), fill=color)
+        print('Cells drawn.                                   ')
     print('Saving grid image ...')
-    image.save(f'{grid_id}/grid.png')
-    print(f'Grid ID: {grid_id}')
+    image.save(f'{grid_dir}grid.png')
+    print(f'grid.png saved to {grid_dir}.')
     
     
 # Define the QuietDict class

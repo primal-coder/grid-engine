@@ -1,8 +1,10 @@
+from grid_engine._cell import Cell
 from abc import ABC
-from typing import Optional, Any, AnyStr
+from typing import Optional, Any, AnyStr, Union
 from uuid import uuid4
 
-class AbstractGridObject(ABC):
+
+class _AbstractGridObject(ABC):
     _object_id = None
     _name = None
     _grid = None
@@ -26,7 +28,7 @@ class AbstractGridObject(ABC):
         return self._grid
 
     @property
-    def cell(self) -> Optional[Any]:
+    def cell(self) -> type(Cell):
         return self._cell
     
     @cell.setter
@@ -47,29 +49,32 @@ class AbstractGridObject(ABC):
             
     @property
     def position(self) -> Optional[Any]:
-        return self.cell.coordinates
+        if self.cell is not None:
+            return self.cell.coordinates
     
     @property
     def x(self) -> Optional[int]:
-        return self.cell.coordinates[0]
+        if self.cell is not None:
+            return self.cell.coordinates[0]
     
     @property
     def y(self) -> Optional[int]:
-        return self.cell.coordinates[1]
+        if self.cell is not None:
+            return self.cell.coordinates[1]
     
     
-class BaseGridObject(AbstractGridObject):
-    def __init__(self, grid: Any, name: AnyStr, object_type: AnyStr, cell: AnyStr = None):
-        super(BaseGridObject, self).__init__()
+class _BaseGridObject(_AbstractGridObject):
+    def __init__(self, grid: Any, name: AnyStr, object_type: AnyStr, cell: Union[AnyStr, type(Cell)] = None):
+        super(_BaseGridObject, self).__init__()
         self._object_id = uuid4().hex[-4:]
         self.name = name
         self._grid = grid
         self._object_type = object_type
         init_cell = self.grid.random_cell(attr=('passable', True)) if cell is None else cell
+        init_cell = self.grid[cell] if isinstance(cell, str) else init_cell
         self.cell = init_cell
 
 
-class GridObject(BaseGridObject):
-    def __init__(self, grid: Any, name: AnyStr, object_type: AnyStr, cell: AnyStr = None):
+class GridObject(_BaseGridObject):
+    def __init__(self, grid: Any, name: AnyStr, object_type: AnyStr, cell: Union[AnyStr, type(Cell)]  = None):
         super(GridObject, self).__init__(grid, name, object_type, cell)
-        self._object_type = object_type

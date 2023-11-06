@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
     
 setup(
     name='gridengine_framework',
-    version='0.3.0',
+    version='0.5.2',
     description='A framework for generating and manipulating grid-based game worlds',
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -20,6 +20,7 @@ setup(
         'pymunk',
         'noise'
     ],
+    scripts=['grid_engine/__main__.py'],
     keywords='game development 2d grid world generation procedural generation cell numpy pillow pyglet pymunk cli',
     include_package_data=True,
     package_data={'grid_engine': ['_blueprint/terrains.json']}

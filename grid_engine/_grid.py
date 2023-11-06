@@ -81,7 +81,7 @@ def get_vector_direction(pointa, pointb):
     )
 
 
-def extract_cell_data(grid):
+def _extract_cell_data(grid):
     """Accepts a grid object and returns only the necessary data to draw the cells"""
     cell_data = []
     for c, cell in grid.cells.items.items():
@@ -89,6 +89,21 @@ def extract_cell_data(grid):
         cell_data.append(cdata)
     return cell_data
 
+def extract_cell_data(grid):
+    cell_data = {"X": [], "Y": [], "CATEGORY": [], "COLOR": [], "NORIVER": []}
+    for c, cell in grid.cells.items.items():
+        cell_data["X"].append(cell.x)
+        cell_data["Y"].append(cell.y)
+        if cell.terrain_str in ["GRASS0", "GRASS1", "BEACH_GRASS", "GULCH0", "FOOTHILL"]:
+            cell_data["CATEGORY"].append("GRASS")
+        elif cell.terrain_str in ["SAND", "SEASHELL", "SANDSTONE"]:
+            cell_data["CATEGORY"].append("SAND")
+        elif cell.terrain_str in ["RIVER", "RIVERBANK"]:
+            cell_data["CATEGORY"].append("RIVER")
+        elif cell.terrain_str == "OCEAN":
+            cell_data["CATEGORY"].append("OCEAN")
+        cell_data["COLOR"].append(cell.terrain_color)
+    return cell_data
 
 def save_grid(grid: Grid):
     if not _os.path.exists(f'{saves_dir}{grid.grid_id[-5:]}'):
@@ -413,7 +428,9 @@ class Grid(AbstractGrid, _ABC):
         optional): The number of octaves for the Perlin noise. Defaults to None. noise_roughness (_Optional[float],
         optional): The roughness of the Perlin noise. Defaults to None.
         """
-        if dimensions is not None and (dimensions[0] * dimensions[1] > 1000000) and not self._size_warning():
+        x, y = dimensions or blueprint.grid_dimensions
+        cell_count = (x * y)/cell_size if cell_size is not None else (x * y)/blueprint._cell_size
+        if dimensions is not None and (cell_count > 1000000) and not self._size_warning(cell_count):
             return
             
         self.grid_id = _uuid4().hex if blueprint is None else blueprint.blueprint_id
@@ -424,9 +441,11 @@ class Grid(AbstractGrid, _ABC):
         self._init_cell_size = cell_size if cell_size is not None else self.blueprint._cell_size
         self.cell_size = cell_size if cell_size is not None else self.blueprint._cell_size
         self.cells = Cells()
-        for cell in self.grid_plan.keys():
+        for i, cell in enumerate(self.grid_plan.keys()):
+            print(f'Creating cells         {round((i/len(self.grid_plan))*100)}%', end='\r')
             self.cells[cell] = Cell(cell, parentgrid=self)
             self.update({cell: self.cells[cell]})
+        print(f'Created cells          100%')
         self.dictTerrain = self.blueprint.dictTerrain
         self.dictObject = self.blueprint.dictObject
         self.dictUnit = self.blueprint.dictUnit
@@ -467,9 +486,9 @@ class Grid(AbstractGrid, _ABC):
 
         # self.town = GridZone(self, 'Town', 'town', self.random_cell(attr=('passable', True)), (45, 45, 45), 2)
 
-    def _size_warning(self, cell_dimensions):
+    def _size_warning(self, cell_count):
         import colorama
-        quit = input(f'{colorama.Fore.RED}WARNING{colorama.Fore.RESET}: The provided parameters will generate a grid composed of {colorama.Fore.LIGHTWHITE_EX}{round((args.rows*args.columns)/1000000, 1)} million{colorama.Fore.RESET} cells. \nThis will consume a significant amount of memory/resources/time. \nIf you have limited amount of memory this could cause your system to hang or crash. \nIf you understand the risks, continue by pressing {colorama.Fore.LIGHTGREEN_EX}ENTER{colorama.Fore.RESET}. Otherwise, press {colorama.Fore.LIGHTRED_EX}CTRL+C{colorama.Fore.RESET} to exit.')
+        quit = input(f'{colorama.Fore.RED}WARNING{colorama.Fore.RESET}: The provided parameters will generate a grid composed of {colorama.Fore.LIGHTWHITE_EX}{round(cell_count/1000000, 1)} million{colorama.Fore.RESET} cells. \nThis will consume a significant amount of memory/resources/time. \nIf you have limited amount of memory this could cause your system to hang or crash. \nIf you understand the risks, continue by pressing {colorama.Fore.LIGHTGREEN_EX}ENTER{colorama.Fore.RESET}. Otherwise, press {colorama.Fore.LIGHTRED_EX}CTRL+C{colorama.Fore.RESET} to exit.')
         return quit == ''
     
     def __getstate__(self):
@@ -610,42 +629,90 @@ class Grid(AbstractGrid, _ABC):
         return self.grid_array[r, f, 0]['designation']
 
     @_log_method
-    def get_nearest_cell_with(self, cella: _Union[str, Cell], attr_name: str, attr_val: Any):
-        """Returns the nearest cell with the specified attribute value.
+    def get_nearest_cell_with(
+        self, 
+        cella: _Union[str, Cell], 
+        attr_name: str, 
+        val: Any, 
+        by_entry: bool = False, 
+        qualifications: _Optional[Union[dict[str, dict[str, str]], dict[str, str]]] = None,
+    ):
+        """Returns the nearest cell with the specified "attribute: value" pair or "by_entry and qualifications".
         
         Args:
             cella (_Union[str, Cell]): The reference cell.
             attr_name (str): The attribute name.
-            attr_val (Any): The attribute value.
+            val (Any): The attribute value.
+            by_entry (bool, optional): Whether to search by entry. Defaults to False.
+            qualifications (dict, optional): The qualifications for the entry. Defaults to None.
             
         Returns:
             Cell: The nearest cell with the specified attribute value.
             
         Example:
             ```grid.get_nearest_cell_with('a00001', 'passable', True)``` returns the nearest passable cell to cell 'a00001'.
+            ```grid.get_nearest_cell_with('a00001', 'terrain_str', 'GRASS0')``` returns the nearest cell to cell 'a00001' with terrain 'GRASS0'.
+            ```grid.get_nearest_cell_with('a00001', by_entry=True, qualifications = {'object': {'item': 'key'}}) returns the nearest cell to cell 'a00001' with an entry_object['items']['key'] value.
+            ```gird.get_nearest_cell_with('a00001', by_entry=True, qualfications = {'unit': 'any'}) returns the nearest cell to cell 'a00001' with an entry_unit value that is not None.
         """
-        nearest = {'cell': None, 'distance': None}
+        def check_nearest(nearest, cellb, distance):
+            if nearest['distance'] > distance:
+                nearest['cell'] = [cellb]
+                nearest['distance'] = distance
+            elif nearest['distance'] == distance:
+                nearest['cell'].append(cellb)
+            return nearest
+        def check_qualifications(qualifications, cellb):
+            for entry, qualifier in qualifications.items():
+                if qualifier == 'any' and any(getattr(cellb, f'entry_{entry}').values()):
+                    return True
+                elif qualifier == 'all' and all(getattr(cellb, f'entry_{entry}').values()):
+                    return True
+                elif isinstance(    # check if qualifications[entry] is a dict
+                    qualifier,      # and if so     
+                    dict            
+                    ) and (         
+                    getattr(            
+                        cellb,          
+                        f'entry_{entry}'
+                    ).get(
+                        str(
+                            list(
+                                qualifications[entry].keys()
+                                )[0]                          # check if the cell's entry_{entry} dictionary      
+                            )                                 # has the same key/value pair as the qualifications[entry] dictionary
+                        ) == str(                           
+                            list(
+                                qualifications[entry].values()
+                                )[0]
+                            )
+                        ):
+                    return True
+            return False
         count = 0
+        nearest = {'cell': None, 'distance': None}
         for cellb in self.cells.values():
             if not count:
                 nearest['cell'] = [cellb]
                 nearest['distance'] = self.get_distance(cella, cellb.designation)
                 count += 1
                 continue
-            else:            
-                if getattr(cellb, attr_name) == attr_val:
+            elif not qualifications and not by_entry:            
+                if getattr(cellb, attr_name) == val:
                     distance = self.get_distance(cella, cellb.designation)
-                    if nearest['distance'] > distance:
-                        nearest['cell'] = [cellb]
-                        nearest['distance'] = distance
-                    elif nearest['distance'] == distance:
-                        nearest['cell'].append(cellb)
-
-            count += 1
+                    nearest = check_nearest(nearest, cellb, distance)
+            elif by_entry and qualifications:
+                entries = list(qualifications.keys())
+                qualifiers = list(qualifications.values())
+                if check_qualifications(qualifications, cellb):
+                    distance = self.get_distance(cella, cellb.designation)
+                    nearest = check_nearest(nearest, cellb, distance)
+                else:
+                    continue
         if len(nearest['cell']) == 1:
             return nearest['cell'][0]
         else:
-            return _random._choice(nearest['cell'])
+            return _choice(nearest['cell'])
     
     @_log_method
     def get_row_by_index(self, index: _Optional[int] = None) -> _Optional[list[Cell,]]:
@@ -775,7 +842,7 @@ class Grid(AbstractGrid, _ABC):
             self,
             cella: _Optional[_Union[Cell, str]] = None,
             cellb: _Optional[_Union[Cell, str]] = None
-    ) -> _Optional[list[Cell,]]:
+    ) -> _Optional[tuple[list[Cell,], int]]:
         """Returns a list of cells representing the shortest path between two cells and the cost of the path."""
         if isinstance(cella, Cell):
             cella = cella.designation
@@ -783,6 +850,8 @@ class Grid(AbstractGrid, _ABC):
             cellb = cellb.designation
         path, cost = self._astar(cella, cellb)
         path.remove(cella)
+        if cost == float('inf'):
+            return [], cost
         for count, step in enumerate(path):
             if not self[step].passable:
                 path = path[:count]
@@ -1107,13 +1176,7 @@ class Grid(AbstractGrid, _ABC):
         """Returns the cost to move from the current cell to the next cell"""
         cell = self.cells[next]
         cost = self.cells[current].cost_out
-        if current not in cell.adjacent:
-            """Adjusts the cost for adjacency"""
-            cost += float("inf")
-        if not self.grid_plan[next]['passable'] or not cell.passable:
-            cost += float("inf")
-        else:
-            cost += cell.cost_in
+        cost += float("inf") if (not cell.passable or current not in cell.adjacent) else cell.cost_in
         return cost
 
     # Implement A* algorithm
