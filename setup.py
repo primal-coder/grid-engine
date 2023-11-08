@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
     
 setup(
     name='gridengine_framework',
-    version='0.5.2',
+    version='0.5.5',
     description='A framework for generating and manipulating grid-based game worlds',
     long_description=long_description,
     long_description_content_type="text/markdown",

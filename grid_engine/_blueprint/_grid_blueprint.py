@@ -356,6 +356,8 @@ class BaseGridBlueprint(_AbstractGridBlueprint):
         self.quadrants = self._init_quadrants()
         self.graph = grid_info['graph']
         self._init_layers()
+        self.array[:, :, 0] = self.dictGrid.values()
+        self.dictTerrain = {cell: {'raw': 1, 'int': 1, 'str': 'GRASS', 'color': _COLORS['GRASS'], 'cost_in': 1, 'cost_out': 1, 'char': ''} for cell in self.cell_list}
                 
     def _init_quadrants(self):
         quadrants = defaultdict(dict)

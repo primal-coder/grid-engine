@@ -55,6 +55,7 @@ class CellEventMeta(type):
 
 
 class AbstractCell(metaclass=type):
+    """Abstract cell class. Contains the basic attributes and methods of a cell."""
     __slots__ = (
         'parentgrid', 
         'entry',

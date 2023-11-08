@@ -62,7 +62,7 @@ def get_vector_direction(pointa, pointb):
     angle_degrees = int(angle_degrees)
     angle_degrees %= 360
     cardinal_directions = {
-            "E":  range(337, 360) or range(23),
+            "E":  list(range(337, 360)) + list(range(23)) + [0],
             "NE": range(23, 68),
             "N":  range(68, 113),
             "NW": range(113, 158),
@@ -403,6 +403,12 @@ class AbstractGrid(_QuietDict, _ABC):
     @selection.setter
     def selection(self, value):
         self._selection = value
+        
+    def __getitem__(self, key: int | str | tuple[int, int] = None):
+        if super().__getitem__(key) is None and isinstance(key, tuple):
+            return self.cols[key[0]][key[1]]
+        else:
+            return super().__getitem__(key)
 
 
 class Grid(AbstractGrid, _ABC):
@@ -464,25 +470,26 @@ class Grid(AbstractGrid, _ABC):
         self._last_row = None
         self._get_first_last()
         self.selection = None
-        self.landmasses, self.islands = self._find_landmasses()
-        self.landmass_count = len(self.landmasses)
-        self.island_count = len(self.islands)
-        self._set_landmass_cells()
-        self.bodies_of_water, self.oceans, self.seas, self.lakes = self._find_bodies_of_water()
-        self.delete_bodies_of_water()
-        self.bodies_of_water_count = len(self.bodies_of_water)
-        self.ocean_count = len(self.oceans)
-        self.sea_count = len(self.seas)
-        self.lake_count = len(self.lakes)
-        self._set_water_cells()
         for row in self.rows:
             row.row_index = self.rows.index(row)
         for col in self.cols:
             col.col_index = self.cols.index(col)
-        self.river_count = 0
-        self.rivers: list[list[Cell,]] = []
-        self._terraformer = Terraformer(self)
-        self.terraformer.set_rivers(2)
+        if self.with_terrain:
+            self.landmasses, self.islands = self._find_landmasses()
+            self.landmass_count = len(self.landmasses)
+            self.island_count = len(self.islands)
+            self._set_landmass_cells()
+            self.bodies_of_water, self.oceans, self.seas, self.lakes = self._find_bodies_of_water()
+            self.delete_bodies_of_water()
+            self.bodies_of_water_count = len(self.bodies_of_water)
+            self.ocean_count = len(self.oceans)
+            self.sea_count = len(self.seas)
+            self.lake_count = len(self.lakes)
+            self._set_water_cells()
+            self.river_count = 0
+            self.rivers: list[list[Cell,]] = []
+            self._terraformer = Terraformer(self)
+            self.terraformer.set_rivers(2)
 
         # self.town = GridZone(self, 'Town', 'town', self.random_cell(attr=('passable', True)), (45, 45, 45), 2)
 

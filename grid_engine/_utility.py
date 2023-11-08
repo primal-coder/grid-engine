@@ -113,9 +113,8 @@ class QuietDict:
             return self.items[key]
         elif isinstance(key, int):
             return list(self.items.values())[key]
-        else:
-            raise TypeError("Key must be of type str or int")
-
+        return None
+    
     def __setitem__(self, key, value):
         self.items[key] = value
 
