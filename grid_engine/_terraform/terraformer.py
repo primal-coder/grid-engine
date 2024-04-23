@@ -60,8 +60,12 @@ class Terraformer(ABC):
         print(f'River steps: {len(path)}')
         if path is not None:
             path = self.expand_river_path(path)
+            step = 0
+            total_steps = len(path)
+            split = False
             # shaped_path = self.shape_river_path(expanded_path)
             for cell in path:
+                step += 1
                 cell.terrain_str = 'RIVER'
                 cell.terrain_raw = 0.0
                 cell.terrain_int = 9
@@ -73,7 +77,7 @@ class Terraformer(ABC):
                     'color': cell.terrain_color, 
                     'cost_in': 2, 
                     'cost_out': 2
-                    }        
+                    }                            
             self.grid.river_count += 1
             self.grid.rivers.append(path)
         else:
@@ -86,9 +90,10 @@ class Terraformer(ABC):
             expanded_path.append(cell)
             adjacent_cells = cell.adjacent
             for adjacent_cell in adjacent_cells:
-                adjacent_cell = self.cells[adjacent_cell]
-                if adjacent_cell not in expanded_path and adjacent_cell.passable and len(expanded_path) % 5: 
-                    expanded_path.append(adjacent_cell)
+                if adjacent_cell is not None:
+                    adjacent_cell = self.cells[adjacent_cell]
+                    if adjacent_cell not in expanded_path and adjacent_cell.passable and len(expanded_path) % 5: 
+                        expanded_path.append(adjacent_cell)
         return expanded_path
     
     @_log_method
@@ -96,25 +101,26 @@ class Terraformer(ABC):
         for cell in riverbank_cells:
             adjacent_cells = cell.adjacent
             for adjacent_cell in adjacent_cells:
-                adjacent_cell = self.cells[adjacent_cell]
-                if adjacent_cell.terrain_str not in ['RIVER', 'RIVERBANK', 'OCEAN', 'SAND']:
-                    if adjacent_cell.terrain_str in ['GRASS0', 'GRASS1', 'BEACH_GRASS', 'FOOTHILL']:
-                        adjacent_cell.terrain_color = RIVERBANK_SAND
-                    elif adjacent_cell.terrain_str == 'FOOTHILL':
-                        adjacent_cell.terrain_color = RIVERBANK_GRASS
-                    elif adjacent_cell.terrain_str == 'MOUND':
-                        adjacent_cell.terrain_color = RIVERBANK_MOUND
-                    adjacent_cell.terrain_str = 'RIVERBANK'
-                    adjacent_cell.terrain_raw = 0.0
-                    adjacent_cell.terrain_int = 8
-                    self.dictTerrain[adjacent_cell.designation] = {
-                        'str': adjacent_cell.terrain_str, 
-                        'raw': adjacent_cell.terrain_raw, 
-                        'int': adjacent_cell.terrain_int, 
-                        'color': adjacent_cell.terrain_color, 
-                        'cost_in': 1, 
-                        'cost_out': 2
-                        }
+                if adjacent_cell is not None:
+                    adjacent_cell = self.cells[adjacent_cell]
+                    if adjacent_cell.terrain_str not in ['RIVER', 'RIVERBANK', 'OCEAN', 'SAND']:
+                        if adjacent_cell.terrain_str in ['GRASS0', 'GRASS1', 'BEACH_GRASS', 'FOOTHILL']:
+                            adjacent_cell.terrain_color = RIVERBANK_SAND
+                        elif adjacent_cell.terrain_str == 'FOOTHILL':
+                            adjacent_cell.terrain_color = RIVERBANK_GRASS
+                        elif adjacent_cell.terrain_str == 'MOUND':
+                            adjacent_cell.terrain_color = RIVERBANK_MOUND
+                        adjacent_cell.terrain_str = 'RIVERBANK'
+                        adjacent_cell.terrain_raw = 0.0
+                        adjacent_cell.terrain_int = 8
+                        self.dictTerrain[adjacent_cell.designation] = {
+                            'str': adjacent_cell.terrain_str, 
+                            'raw': adjacent_cell.terrain_raw, 
+                            'int': adjacent_cell.terrain_int, 
+                            'color': adjacent_cell.terrain_color, 
+                            'cost_in': 1, 
+                            'cost_out': 2
+                            }
 
     @_log_method
     def get_river_banks(self):
@@ -123,23 +129,24 @@ class Terraformer(ABC):
             if cell.terrain_str == 'RIVER':
                 adjacent_cells = cell.adjacent
                 for adjacent_cell in adjacent_cells:
-                    adjacent_cell = self.cells[adjacent_cell]
-                    if adjacent_cell.terrain_str not in ['RIVER', 'OCEAN', 'SAND', 'MOUND', 'MOUNTAIN', 'HILL', 'LAKE', 'RIVERBANK']:
-                        adjacent_cell.terrain_color = RIVERBANK_SAND
-                    elif adjacent_cell.terrain_str == 'MOUND':
-                        adjacent_cell.terrain_color = RIVERBANK_MOUND
-                    adjacent_cell.terrain_str = 'RIVERBANK'
-                    adjacent_cell.terrain_raw = 0.0
-                    adjacent_cell.terrain_int = 8
-                    self.dictTerrain[adjacent_cell.designation] = {
-                        'str': adjacent_cell.terrain_str, 
-                        'raw': adjacent_cell.terrain_raw, 
-                        'int': adjacent_cell.terrain_int, 
-                        'color': adjacent_cell.terrain_color, 
-                        'cost_in': 1, 
-                        'cost_out': 2
-                        }
-                    riverbank_cells.append(adjacent_cell)
+                    if adjacent_cell is not None:
+                        adjacent_cell = self.cells[adjacent_cell]
+                        if adjacent_cell.terrain_str not in ['RIVER', 'OCEAN', 'SAND', 'MOUND', 'MOUNTAIN', 'HILL', 'LAKE', 'RIVERBANK']:
+                            adjacent_cell.terrain_color = RIVERBANK_SAND
+                        elif adjacent_cell.terrain_str == 'MOUND':
+                            adjacent_cell.terrain_color = RIVERBANK_MOUND
+                        adjacent_cell.terrain_str = 'RIVERBANK'
+                        adjacent_cell.terrain_raw = 0.0
+                        adjacent_cell.terrain_int = 8
+                        self.dictTerrain[adjacent_cell.designation] = {
+                            'str': adjacent_cell.terrain_str, 
+                            'raw': adjacent_cell.terrain_raw, 
+                            'int': adjacent_cell.terrain_int, 
+                            'color': adjacent_cell.terrain_color, 
+                            'cost_in': 1, 
+                            'cost_out': 2
+                            }
+                        riverbank_cells.append(adjacent_cell)
         return riverbank_cells
 
 
@@ -150,7 +157,7 @@ class Terraformer(ABC):
             if adjacent_cells := [
                 adjacent_cell
                 for adjacent_cell in current_cell.adjacent
-                if self.cells[adjacent_cell].passable
+                if adjacent_cell is not None and self.cells[adjacent_cell].passable
             ]:
                 direction = (
                     direction
@@ -169,7 +176,7 @@ class Terraformer(ABC):
         current_distance = self.grid.get_distance(start_cell, end_cell)
         while current_distance > 1:
             current_cell = self.cells[river_cells[-1]]
-            adjacent_cells = [adjacent_cell for adjacent_cell in current_cell.adjacent if self.cells[adjacent_cell].passable and adjacent_cell not in river_cells]
+            adjacent_cells = [adjacent_cell for adjacent_cell in current_cell.adjacent if adjacent_cell is not None and self.cells[adjacent_cell].passable and adjacent_cell not in river_cells]
             if not adjacent_cells:
                 river_cells.pop(-1)
                 break
@@ -223,10 +230,10 @@ class Terraformer(ABC):
                 print(f'Start cell: {start}, End cell: {end}', end = '\r')
                 while self.grid.get_distance(
                     start.designation, end.designation, 'cells'
-                ) < 250 or not [
+                ) < 100 or not [
                     adjacent_cell
                     for adjacent_cell in start.adjacent
-                    if self.cells[adjacent_cell].passable
+                    if adjacent_cell is not None and self.cells[adjacent_cell].passable
                 ]:
                     start = random.choice(coast_cells)
                     end = random.choice(lake_coastal_cells) if lake_coastal_cells else random.choice(coast_cells)
@@ -238,3 +245,59 @@ class Terraformer(ABC):
         self.expand_riverbanks(riverbanks)
         print('done')            
  
+    def seed_forest(self):
+        start_cell = self.grid.random_cell()
+        while start_cell.clearance_x < 10 or start_cell.clearance_y < 10:
+            start_cell = self.grid.random_cell()
+        return start_cell
+ 
+    def get_forest_borders(self, start_cells: Union[Cell, List[Cell]]):
+        forest_border_start = start_cells.get_diagonal(-1, -1, 5)[-1]
+        forest_border_step2 = start_cells.get_diagonal(-1, 1, 5)[-1]
+        forest_border_step3 = start_cells.get_diagonal(1, 1, 5)[-1]
+        forest_border_step4 = start_cells.get_diagonal(1, -1, 5)[-1]
+        forest_border = []
+        step1 = self.grid.get_walk(forest_border_start, forest_border_step2)
+        forest_border.extend(step1)
+        step2 = self.grid.get_walk(forest_border_step2, forest_border_step3)
+        forest_border.extend(step2)
+        step3 = self.grid.get_walk(forest_border_step3, forest_border_step4)
+        forest_border.extend(step3)
+        step4 = self.grid.get_walk(forest_border_step4, forest_border_start)
+        forest_border.extend(step4)
+        return forest_border
+        
+    def get_inner_forest_cells(self, start_cell, forest_border):
+        for cell in forest_border:
+            self.grid[cell].passable = False
+        inner_forest_cells = start_cell.get_clearance_zone()
+        inner_forest_cells = inner_forest_cells.cells
+        for cell in forest_border:
+            self.grid[cell].passable = True
+        forest_cells = []
+        forest_cells.extend(forest_border)
+        for cell in inner_forest_cells:
+            forest_cells.append(cell.designation)
+        return forest_cells
+    
+    def set_forest(self):
+        start_cells = self.seed_forest()
+        forest_borders = self.get_forest_borders(start_cells)
+        forest_cells = self.get_inner_forest_cells(start_cells, forest_borders)
+        for cell in forest_cells:
+            cell = self.grid[cell]
+            cell.terrain_str = 'FOREST'
+            cell.terrain_raw = 0.0
+            cell.terrain_int = 4
+            cell.terrain_color = 'GRASS_GREEN'
+            cell.terrain_char = '^'
+            self.dictTerrain[cell.designation] = {
+                'str': cell.terrain_str, 
+                'raw': cell.terrain_raw, 
+                'int': cell.terrain_int, 
+                'color': cell.terrain_color, 
+                'cost_in': 2, 
+                'cost_out': 2,
+                'char': '^'
+                }
+                   

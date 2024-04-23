@@ -27,7 +27,7 @@ class GridGroup(_ABC):
         for cell in self.cells:
             cell.join_group(self.title, self)
 
-    def add_cell(self, cell):
+    def add_cell(self, cell: Cell):
         """Adds a cell to the group and adds the group to the cell."""
 
         self.cells.append(cell)

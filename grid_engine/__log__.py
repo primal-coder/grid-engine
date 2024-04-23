@@ -1,5 +1,8 @@
+import time
 import logging
 from functools import wraps
+
+date = time.strftime('%Y-%m-%d', time.localtime())
 
 logging.addLevelName(44, 'GRIDENGINE')
 logger = logging.getLogger('GRIDENGINE')
@@ -9,7 +12,7 @@ def gridengine(message):
     logger.log(44, message)
 
 
-file_handler = logging.FileHandler('gridengine.log', 'w')
+file_handler = logging.FileHandler(f'logs/{date}.log', 'a')
 file_handler.setLevel(44)
 file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(module)s - %(message)s'))
 logger.addHandler(file_handler)

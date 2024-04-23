@@ -61,6 +61,7 @@ class _AbstractGridObject(ABC):
     def y(self) -> Optional[int]:
         if self.cell is not None:
             return self.cell.coordinates[1]
+        
     
     
 class _BaseGridObject(_AbstractGridObject):

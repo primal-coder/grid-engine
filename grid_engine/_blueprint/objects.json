@@ -1,0 +1,13 @@
+{
+    "default": {
+        "TREE":{
+            "object_type": "resource",
+            "terrain_override": true,
+            "raw_max": 0.21,
+            "int": 9,
+            "COLOR": "GRASS_GREEN",
+            "cost_in": null,
+            "cost_out": 0
+        }
+    }
+}

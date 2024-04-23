@@ -1,19 +1,20 @@
-from ..__log__ import log_method as _log_method
+#from screeninfo import get_monitors as _get_monitors
 
 from ._grid_processing import *
 from ._terrain_processing import *
-from ._terrain_processing import _COLORS 
+from ._terrain_processing import _COLORS
+from ._floorplan_processing import *
 import numpy as np
 from collections import defaultdict
 from uuid import uuid4
 import pickle
 import os as _os
 
-
 saves_dir = 'grid_engine/_saves/'
 
 _OCEAN_BLUE = _COLORS['OCEAN_BLUE']
 
+#_SCRX, _SCRY = _SCR_DIMS = _get_monitors()[0].width, _get_monitors()[0].height
 
 def save_blueprint(blueprint):
     import os
@@ -38,21 +39,21 @@ _UNPASSABLE_TERRAIN = [
 ]
 
 _layer_attributes = {
-        'base':       [
+        'base':    [
                 'designation', 'coordinates', 'cell_index', 'rank_index',
                 'file_index', 'quadrant_index', 'adjacent', 'groups'
         ],
-        'terrain':    [
+        'terrain': [
                 'raw', 'int',
                 'str', 'color',
                 'cost_in', 'cost_out',
                 'char'
         ],
-        'object':    [
+        'object':  [
                 'items', 'obstructions', 'structures', 'features',
-                'containers', 'doors', 'traps', 'switches'
+                'resources', 'containers', 'doors', 'traps', 'switches'
         ],
-        'unit':      [
+        'unit':    [
                 'players', 'npcs', 'monsters',
                 'neutrals', 'pets', 'mounts'
         ],
@@ -60,11 +61,11 @@ _layer_attributes = {
                 'areas', 'locales', 'regions',
                 'cities', 'towns', 'villages'
         ],
-        'effect':    [
+        'effect':  [
                 'weather', 'lighting',
                 'environment', 'magic'
         ],
-        'fow': [
+        'fow':     [
                 'visibility', 'explored',
                 'seen', 'hidden'
         ]
@@ -76,6 +77,7 @@ class _AbstractGridBlueprint:
     Abstract Grid Blueprint class. This is the blueprint for the GridBlueprint class, if you will.
     """
     _blueprint_id = None
+    _with_terrain = None
     _cell_size = None
     _grid_dimensions = None
     _col_count = None
@@ -110,6 +112,16 @@ class _AbstractGridBlueprint:
         self._cell_size = cell_size
 
     @property
+    def with_terrain(self) -> bool:
+        """Returns whether the grid has terrain."""
+        return self._with_terrain
+
+    @with_terrain.setter
+    def with_terrain(self, with_terrain: bool) -> None:
+        """Sets whether the grid has terrain."""
+        self._with_terrain = with_terrain
+
+    @property
     def grid_dimensions(self) -> tuple[int, int]:
         """Returns the dimensions of the grid."""
         return self._grid_dimensions
@@ -118,8 +130,8 @@ class _AbstractGridBlueprint:
     def grid_dimensions(self, grid_dimensions: tuple[int, int]) -> None:
         """Sets the dimensions(in pixels) of the grid."""
         self._grid_dimensions = grid_dimensions
-        grid_shape = (grid_dimensions[0] // self.cell_size,   # convert to cells
-                            grid_dimensions[1] // self.cell_size)
+        grid_shape = (grid_dimensions[0] // self.cell_size,  # convert to cells
+                      grid_dimensions[1] // self.cell_size)
         self._grid_width = grid_dimensions[0]
         self._col_count = grid_shape[0]
         self._grid_height = grid_dimensions[1]
@@ -144,7 +156,6 @@ class _AbstractGridBlueprint:
     def grid_height(self) -> int:
         """Returns the height(in pixels) of the grid."""
         return self._grid_height
-
 
     @property
     def rank(self) -> list[str]:
@@ -175,7 +186,7 @@ class _AbstractGridBlueprint:
     def cell_list(self, cell_list: Optional[list[str]]) -> None:
         """Sets the list of cells."""
         self._cell_list = cell_list
-        
+
     @property
     def array(self):
         """Returns the array of cells. The array of cells is a NumPy array of cells with 3 dimensions. The first
@@ -184,12 +195,12 @@ class _AbstractGridBlueprint:
         terrain layer.
         """
         return self._array
-    
+
     @array.setter
     def array(self, array) -> None:
         """Sets the array of cells. Each cell's array attribute is set to the corresponding cell in the array."""
         self._array = array
-        
+
     @property
     def dictGrid(self) -> dict[str, any]:
         """Returns the dictionary of cells."""
@@ -199,7 +210,7 @@ class _AbstractGridBlueprint:
     def dictGrid(self, dict_grid) -> None:
         """Sets the dictionary of cells. The value set here will be reflected in the array."""
         self._dictGrid = dict_grid
-        
+
     @property
     def dictTerrain(self):
         """Returns the dictionary of terrain information. Which corresponds to the terrain layer of the array."""
@@ -211,8 +222,9 @@ class _AbstractGridBlueprint:
         set here will be reflected in the array."""
         self._dictTerrain = dictTerrain
         for designation, terrain_info in dictTerrain.items():
-            self.array[self.dictGrid[designation]['col_index']][self.dictGrid[designation]['row_index']][0] = terrain_info
-        
+            self.array[self.dictGrid[designation]['col_index']][self.dictGrid[designation]['row_index']][
+                0] = terrain_info
+
     @property
     def dictObject(self):
         """Returns the dictionary of objects. Which corresponds to the object layer of the array."""
@@ -224,8 +236,8 @@ class _AbstractGridBlueprint:
         be reflected in the array."""
         self._dictObject = dictObject
         for designation, object_info in dictObject.items():
-            self.array[self.dictGrid[designation]['col_index']][self.dictGrid[designation]['row_index']][1] = object_info
-        
+            self.array[self.dictGrid[designation]['col_index']][self.dictGrid[designation]['row_index']][
+                1] = object_info
 
     @property
     def dictUnit(self):
@@ -240,7 +252,6 @@ class _AbstractGridBlueprint:
         for designation, unit_info in dictUnit.items():
             self.array[self.dictGrid[designation]['col_index']][self.dictGrid[designation]['row_index']][2] = unit_info
 
-
     @property
     def dictZone(self):
         """Returns the dictionary of zones. Which corresponds to the zone layer of the array."""
@@ -253,8 +264,6 @@ class _AbstractGridBlueprint:
         for designation, zone_info in dictZone.items():
             self.array[self.dictGrid[designation]['col_index']][self.dictGrid[designation]['row_index']][3] = zone_info
 
-
-
     @property
     def dictEffect(self):
         """Returns the dictionary of effects. Which corresponds to the effect layer of the array."""
@@ -264,12 +273,11 @@ class _AbstractGridBlueprint:
     def dictEffect(self, dictEffect) -> None:
         """Sets the dictionary of effects. Which corresponds to the effect layer of the array. The value set here will
         be reflected in the array."""
-        self._dictEffect = dictEffect   
+        self._dictEffect = dictEffect
         for designation, effect_info in dictEffect.items():
-            self.array[self.dictGrid[designation]['col_index']][self.dictGrid[designation]['row_index']][4] = effect_info
+            self.array[self.dictGrid[designation]['col_index']][self.dictGrid[designation]['row_index']][
+                4] = effect_info
 
-
-            
     @property
     def dictFow(self):
         """Returns the dictionary of fog of war. Which corresponds to the fog of war layer of the array."""
@@ -281,7 +289,6 @@ class _AbstractGridBlueprint:
         self._dictFow = dictFow
         for designation, fow_info in dictFow.items():
             self.array[self.dictGrid[designation]['col_index']][self.dictGrid[designation]['row_index']][5] = fow_info
-        
 
     @property
     def cell_coordinates(self):
@@ -315,21 +322,22 @@ class _AbstractGridBlueprint:
 
     def __getstate__(self):
         return self.__dict__.copy()
-    
+
     def __setstate__(self, state):
         self.__dict__.update(state)
-        
+
 
 class BaseGridBlueprint(_AbstractGridBlueprint):
+    with_terrain = False
 
     def __init__(
-        self, 
-        cell_size: int = None, 
-        grid_dimensions: tuple[int, int] = None, 
-        grid_id: str = None, 
-        array: np.ndarray = None, 
-        quadrants: dict = None, 
-        graph: dict = None
+            self,
+            cell_size: int = None,
+            grid_dimensions: tuple[int, int] = None,
+            grid_id: str = None,
+            array: np.ndarray = None,
+            quadrants: dict = None,
+            graph: dict = None
     ) -> None:
         super(BaseGridBlueprint, self).__init__()
         self.blueprint_id = uuid4().hex if grid_id is None else grid_id
@@ -338,13 +346,14 @@ class BaseGridBlueprint(_AbstractGridBlueprint):
             self._quadrants = quadrants
             self._graph = graph
             self._init_from_array()
-        self.cell_size = cell_size if cell_size is not None else 10
-        self.grid_dimensions = grid_dimensions if grid_dimensions is not None else (1000, 1000)
+        self.cell_size = cell_size if cell_size is not None else 3
+        self.grid_dimensions = grid_dimensions if grid_dimensions is not None else (_SCRX, _SCRY)
         self._array = np.array(
-                [0 for _ in list(range((self._col_count * self._row_count) * (len(_levels)-1)))],
+                [0 for _ in list(range((self._col_count * self._row_count) * (len(_levels) - 1)))],
                 dtype=type(any),
         ).reshape((self._col_count, self._row_count, len(_levels) - 1))
         self._init()
+        self.layer_attributes = _layer_attributes
 
     def _init(self):
         grid_info = process_grid(self._row_count, self._col_count, self.cell_size)
@@ -357,8 +366,11 @@ class BaseGridBlueprint(_AbstractGridBlueprint):
         self.graph = grid_info['graph']
         self._init_layers()
         self.array[:, :, 0] = self.dictGrid.values()
-        self.dictTerrain = {cell: {'raw': 1, 'int': 1, 'str': 'GRASS', 'color': _COLORS['GRASS'], 'cost_in': 1, 'cost_out': 1, 'char': ''} for cell in self.cell_list}
-                
+        if not self.with_terrain:
+            self.dictTerrain = {
+                    cell: {'raw':  1, 'int': 1, 'str': 'GRASS', 'color': _COLORS['GRASS'], 'cost_in': 1, 'cost_out': 1,
+                           'char': ''} for cell in self.cell_list}
+
     def _init_quadrants(self):
         quadrants = defaultdict(dict)
         quad_cells = defaultdict(list)
@@ -368,7 +380,7 @@ class BaseGridBlueprint(_AbstractGridBlueprint):
             # Create a dictionary of the cells in each quadrant
             quadrants[quadrant_index] = {
                     'cell_count': len(cell_list),
-                    'cells':       cell_list
+                    'cells':      cell_list
             }
         return quadrants
 
@@ -377,47 +389,52 @@ class BaseGridBlueprint(_AbstractGridBlueprint):
             if i > 0:
                 for cell, information in self.dictGrid.items():
                     # self.array[information['col_index']][information['row_index']][0] = information
-                    self.array[information['col_index']][information['row_index']][i-1] = {f'{attr}': None for attr in _layer_attributes[level]}
-                setattr(self, f'_dict{level.capitalize()}', self.array[:, :, i-1])
-       
+                    self.array[information['col_index']][information['row_index']][i - 1] = {f'{attr}': None for attr in
+                                                                                             _layer_attributes[level]}
+                setattr(self, f'_dict{level.capitalize()}', self.array[:, :, i - 1])
+
     def __json__(self):
         return {
-            'cell_size': self.cell_size,
-            'grid_dimensions': self.grid_dimensions,
-            'array': self.array,
-            'quadrants': self.quadrants,
-            'graph': self.graph,
+                'cell_size':       self.cell_size,
+                'grid_dimensions': self.grid_dimensions,
+                'array':           self.array,
+                'quadrants':       self.quadrants,
+                'graph':           self.graph,
         }
 
+
 class TerrainGridBlueprint(BaseGridBlueprint):
+    with_terrain = True
+
     def __init__(
             self, cell_size: int, grid_dimensions: tuple[int, int], grid_id: str = None, noise_scale: int = None,
             noise_octaves: int = None, noise_roughness: float = None
-            ):
-        super(TerrainGridBlueprint, self).__init__(cell_size, grid_dimensions, grid_id)        
+    ):
+        super(TerrainGridBlueprint, self).__init__(cell_size, grid_dimensions, grid_id)
         for cell in self.dictGrid:
             self.dictGrid[cell]['passable'] = None
         self._init_terrain(noise_scale, noise_octaves, noise_roughness)
 
-    @_log_method
     def _init_terrain(self, noise_scale, noise_octaves, noise_roughness):
-        self._noise_scale = noise_scale if noise_scale is not None else 25
-        self._noise_octaves = noise_octaves if noise_octaves is not None else 38
-        self._noise_roughness = noise_roughness if noise_roughness is not None else 0.35
-        self.dictTerrain = process_noise(self._noise_scale, self._noise_octaves, self._noise_roughness, self._row_count, self._col_count, self._cell_size, self.dictGrid)
+        self._noise_scale = noise_scale if noise_scale is not None else 350
+        self._noise_octaves = noise_octaves if noise_octaves is not None else 88
+        self._noise_roughness = noise_roughness if noise_roughness is not None else 0.65
+        self.dictTerrain = process_noise(
+            self._noise_scale, self._noise_octaves, self._noise_roughness, self._row_count, self._col_count,
+            self._cell_size, self.dictGrid
+            )
         self._set_base_terrain()
         self._adjust_passability()
 
-    @_log_method
     def _set_base_terrain(self):
         base_terrain = {
-            'str': 'OCEAN',
-            'raw': None,
-            'int': 9,
-            'color': _OCEAN_BLUE,
-            'cost_in': float('inf'),
-            'cost_out': float('inf'),
-            'char': '~'
+                'str':      'OCEAN',
+                'raw':      None,
+                'int':      9,
+                'color':    _OCEAN_BLUE,
+                'cost_in':  float('inf'),
+                'cost_out': float('inf'),
+                'char':     '~'
         }
         dictTerrain = self.dictTerrain.copy()
         for cell in self.cell_list:
@@ -425,7 +442,7 @@ class TerrainGridBlueprint(BaseGridBlueprint):
                 dictTerrain[cell] = base_terrain
                 self.dictGrid[cell]['passable'] = False
         self.dictTerrain = dictTerrain
-    @_log_method
+
     def _adjust_passability(self):
         passable = []
         unpassable = []
@@ -440,17 +457,17 @@ class TerrainGridBlueprint(BaseGridBlueprint):
 
     def __json__(self):
         return {
-            'cell_size': self.cell_size,
-            'grid_dimensions': self.grid_dimensions,
-            'row_strings': self.rank,
-            'col_strings': self.file,
-            'cell_strings': self.cell_list,
-            'cell_coordinates': self.cell_coordinates,
-            'dict_grid': self.dictGrid,
-            'dict_terrain': self.dictTerrain,
-            'noise_scale': self._noise_scale,
-            'noise_octaves': self._noise_octaves,
-            'noise_roughness': self._noise_roughness,
-            'quadrants': self.quadrants,
-            'graph': self.graph,
+                'cell_size':        self.cell_size,
+                'grid_dimensions':  self.grid_dimensions,
+                'row_strings':      self.rank,
+                'col_strings':      self.file,
+                'cell_strings':     self.cell_list,
+                'cell_coordinates': self.cell_coordinates,
+                'dict_grid':        self.dictGrid,
+                'dict_terrain':     self.dictTerrain,
+                'noise_scale':      self._noise_scale,
+                'noise_octaves':    self._noise_octaves,
+                'noise_roughness':  self._noise_roughness,
+                'quadrants':        self.quadrants,
+                'graph':            self.graph,
         }

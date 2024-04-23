@@ -1,11 +1,8 @@
-from ..__log__ import log_method as _log_method
-
 from typing import Optional, List, Tuple, Dict, Any
 import itertools
 import numpy as np
 
 
-@_log_method
 def generate_row_strings(row_count: int) -> List[str]:
     """
     Generate a list of strings representing rows.
@@ -25,6 +22,7 @@ def generate_row_strings(row_count: int) -> List[str]:
         # Output: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
         ```
     """
+    print(f'Row count: {row_count}')
     rows = [chr(i + 97) for i in range(26)]
     rows.extend(chr(i + 65) for i in range(26))
     rows.extend(
@@ -41,7 +39,6 @@ def generate_row_strings(row_count: int) -> List[str]:
     )
     return rows[:row_count]
 
-@_log_method
 def generate_column_strings(col_count: int) -> List[str]:
     """
     Generate a list of strings representing columns.
@@ -61,25 +58,23 @@ def generate_column_strings(col_count: int) -> List[str]:
         # Output: ['00001', '00002', '00003', '00004', '00005']
         ```
     """
+    print(f'Column count: {col_count}')
     cols = [str(r + 1) for r in range(col_count)][::-1]
     for i in range(col_count):
         cols[i] = cols[i].zfill(5)
     cols.reverse()
     return cols
 
-@_log_method
 def get_row_strings(row_count: Optional[int] = None) -> List[str]:
     if row_count is None or row_count < 1:
         raise ValueError("row_count must be an integer > 1")
     return generate_row_strings(row_count)
 
-@_log_method
 def get_column_strings(col_count: Optional[int] = None) -> List[str]:
     if col_count is None or col_count < 1:
         raise ValueError("col_count must be an integer > 1")
     return generate_column_strings(col_count)
 
-@_log_method
 def generate_cell_strings(row_strings: List[str], col_strings: List[str]) -> List[str]:
     """
     Generate a list of strings representing cells.
@@ -104,11 +99,9 @@ def generate_cell_strings(row_strings: List[str], col_strings: List[str]) -> Lis
     """
     return [r + f for r, f in itertools.product(row_strings, col_strings)]
 
-@_log_method
 def get_cell_strings(row_strings: List[str], col_strings: List[str]) -> List[str]:
     return generate_cell_strings(row_strings, col_strings)
 
-@_log_method
 def get_cell_coordinates(cell_size: int, row_count: int, col_count: int) -> List[Tuple[int, int]]:
     """
     Get the coordinates of each cell in a grid.
@@ -138,7 +131,6 @@ def get_cell_coordinates(cell_size: int, row_count: int, col_count: int) -> List
         for num in range(row_count*col_count)
     ]
 
-@_log_method
 def get_grid_dict(cell_strings: List[str], row_strings: List[str], col_strings: List[str], cell_coordinates: List[Tuple[int, int]]) -> Dict[str, Any]:
     """
     Get a dictionary representing a grid.
@@ -185,7 +177,6 @@ def get_grid_dict(cell_strings: List[str], row_strings: List[str], col_strings: 
         } for i, cell in enumerate(cell_strings)
     }
     
-@_log_method
 def generate_quadrant_coordinates(row_count: int, col_count: int) -> List[List[Tuple[int, int]]]:
     """
     Get the coordinates of each quadrant in a grid.
@@ -224,7 +215,6 @@ def generate_quadrant_coordinates(row_count: int, col_count: int) -> List[List[T
         for i, j in itertools.product(range(2), range(2))
     ]
     
-@_log_method
 def get_quadrant_indices(quadrant_coords: List[List[Tuple[int,int]]], grid_dict: Dict[str, Any]) -> Dict[str, Any]:
     """
     Assign quadrant indices to cells in a grid.
@@ -254,7 +244,6 @@ def get_quadrant_indices(quadrant_coords: List[List[Tuple[int,int]]], grid_dict:
                 grid_dict[cell]['quadrant_index'] = i
     return grid_dict
 
-@_log_method
 def generate_adjacency(grid_dict: Dict[str, any], row_count: int, col_count: int) -> Dict[str, Any]:
     """
     Assign adjacent cells to each cell in a grid.
@@ -274,11 +263,12 @@ def generate_adjacency(grid_dict: Dict[str, any], row_count: int, col_count: int
         updated_grid_dict = get_adjacency(grid_dict, row_count, col_count)
         ```
     """
-
+    print('Generating adjacency')
     cell_list = list(grid_dict.keys())
     w = col_count
     h = row_count
     for cell, information in grid_dict.items():
+        print(f'Progress: {information["cell_index"]}/{len(grid_dict)}', end='\r')
         n = information['cell_index']
         r = grid_dict[cell]['row_index']
         f = grid_dict[cell]['col_index']
@@ -291,35 +281,36 @@ def generate_adjacency(grid_dict: Dict[str, any], row_count: int, col_count: int
                                             cell_list[n - 1]]
         elif r == 0:
             if f == 0:
-                grid_dict[cell]['adjacent'] = [cell_list[1], cell_list[w + 1],
-                                                cell_list[w]]
+                grid_dict[cell]['adjacent'] = [None, None, None, cell_list[1], cell_list[w + 1],
+                                                cell_list[w], None, None]
             elif f == col_count - 1:
-                grid_dict[cell]['adjacent'] = [cell_list[n + w], cell_list[n + (w - 1)],
+                grid_dict[cell]['adjacent'] = [None, None, None, None, None, cell_list[n + w], cell_list[n + (w - 1)],
                                                 cell_list[n - 1]]
             else:
-                grid_dict[cell]['adjacent'] = [cell_list[n + 1], cell_list[n + (w + 1)],
+                grid_dict[cell]['adjacent'] = [None, None, None, cell_list[n + 1], cell_list[n + (w + 1)],
                                                 cell_list[n + w],
                                                 cell_list[n + (w - 1)],
                                                 cell_list[n - 1]]
         elif r == row_count - 1:
             if f == 0:
-                grid_dict[cell]['adjacent'] = [cell_list[n - w], cell_list[n - (w - 1)],
-                                                cell_list[n + 1]]
+                grid_dict[cell]['adjacent'] = [None, cell_list[n - w], cell_list[n - (w - 1)],
+                                                cell_list[n + 1], None, None, None, None]
             elif f == col_count - 1:
-                grid_dict[cell]['adjacent'] = [cell_list[n - (w + 1)], cell_list[n - w],
+                grid_dict[cell]['adjacent'] = [cell_list[n - (w + 1)], cell_list[n - w], None, None, None, None, None,
                                                 cell_list[n - 1]]
             else:
                 grid_dict[cell]['adjacent'] = [cell_list[n - (w + 1)], cell_list[n - w],
                                                 cell_list[n - (w - 1)],
                                                 cell_list[n + 1],
+                                                None, None, None,
                                                 cell_list[n - 1]]
         elif f == 0:
-            grid_dict[cell]['adjacent'] = [cell_list[n - w], cell_list[n - (w - 1)],
+            grid_dict[cell]['adjacent'] = [None, cell_list[n - w], cell_list[n - (w - 1)],
                                             cell_list[n + 1],
                                             cell_list[n + (w + 1)],
-                                            cell_list[n + w]]
+                                            cell_list[n + w], None, None]
         elif f == col_count - 1:
-            grid_dict[cell]['adjacent'] = [cell_list[n - (w + 1)], cell_list[n - w],
+            grid_dict[cell]['adjacent'] = [cell_list[n - (w + 1)], cell_list[n - w], None, None, None,
                                             cell_list[n + w],
                                             cell_list[n + (w - 1)],
                                             cell_list[n - 1]]
@@ -349,7 +340,6 @@ def get_graph(grid_dict: Dict[str, Any]) -> Dict[str, List[str]]:
         for cell, info in grid_dict.items()
     }
 
-@_log_method    
 def process_grid(row_count: int, col_count: int, cell_size: int) -> Dict[str, Any]:
     """
     Process a grid.

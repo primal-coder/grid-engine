@@ -1,12 +1,12 @@
 import itertools
 import random
-from . import Blueprint
-from . import Grid
+from . import blueprint
+from . import grid
 
 from collections import deque
 
 def generate_blueprint(dimensions: tuple[int, int] = None):
-    blueprint = Blueprint.BaseGridBlueprint(cell_size=1, grid_dimensions=dimensions)
+    blueprint = blueprint.BaseGridBlueprint(cell_size=1, grid_dimensions=dimensions)
     for cell in blueprint.dictGrid.copy():
             blueprint.dictGrid[cell]['passable'] = True
     terrain_dict = {
@@ -16,7 +16,7 @@ def generate_blueprint(dimensions: tuple[int, int] = None):
     blueprint.dictTerrain = terrain_dict
     return blueprint
 
-class Dungeon(Grid.Grid):
+class Dungeon(grid.Grid):
     def __init__(self, dimensions):
         blueprint = generate_blueprint(dimensions)
         blueprint = self.init_fill(blueprint)

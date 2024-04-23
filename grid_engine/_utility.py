@@ -84,6 +84,7 @@ def generate_images(dimensions, cdata, cell_size, grid_id, animate=False):
         grid_dir = get_grid_dir(grid_id)
         frames[0].save(f'{grid_dir}grid.gif', format='GIF', append_images=frames[1:], save_all=True, duration=0.001, loop=0)
         print(f'grid.gif saved to {grid_dir}.')
+        print('Press ')
     else:
         for i, cell in enumerate(cells):
             print(f'Drawing cells         {round((i/total_cell_count)*100)}%', end='\r')
@@ -96,6 +97,10 @@ def generate_images(dimensions, cdata, cell_size, grid_id, animate=False):
     image.save(f'{grid_dir}grid.png')
     print(f'grid.png saved to {grid_dir}.')
     
+    import matplotlib.pyplot as plt
+    
+    plt.imshow(image)
+    plt.show()   
     
 # Define the QuietDict class
 

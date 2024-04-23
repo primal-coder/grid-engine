@@ -34,12 +34,12 @@ if not args.verbose:
 if args.output is not None:
     if not isinstance(args.output, str) or not args.output.endswith('.json'):
         raise ValueError('Output file name must be a string ending with .json')
-    if not os.listdir(f'{os.getcwd()}{os.sep}blueprint{os.sep}blueprints').count(args.output):
-        args.output = f'{os.getcwd()}{os.sep}blueprint{os.sep}blueprints{os.sep}{args.output}'
+    if not os.listdir(f'{os.getcwd()}{os.sep}grid_engine{os.sep}_blueprint{os.sep}blueprints').count(args.output):
+        args.output = f'{os.getcwd()}{os.sep}grid_engine{os.sep}_blueprint{os.sep}blueprints{os.sep}{args.output}'
     else:
         raise FileExistsError(f'File {args.output} already exists')
 else:
-    args.output = f'{os.getcwd()}{os.sep}src{os.sep}blueprint{os.sep}blueprints{os.sep}grid.json'
+    args.output = f'{os.getcwd()}{os.sep}grid_engine{os.sep}blueprint{os.sep}blueprints{os.sep}grid.json'
 
 if not args.size or not args.columns or not args.rows:
     raise ValueError('Invalid cell size, row count or column count')
@@ -68,4 +68,3 @@ print('Writing grid ...')
 json.dump(data, open(args.output, 'w'), indent=4)
 print(f'Grid written to {args.output}')
 print('Success!')
-        

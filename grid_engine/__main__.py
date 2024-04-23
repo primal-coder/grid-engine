@@ -1,4 +1,4 @@
-from grid_engine import Blueprint, Grid
+from grid_engine import blueprint, grid
 import argparse
 import os
 import sys
@@ -44,33 +44,33 @@ if args.blueprint is not None:
         raise FileNotFoundError(f'File {args.blueprint} does not exist')
     print(f'Loading blueprint from {args.blueprint} ...')
     try:
-        blueprint = Blueprint.load_blueprint(f'{blueprints}{args.blueprint}.pkl',  Blueprint.TerrainGridBlueprint)
+        blueprint = blueprint.load_blueprint(f'{blueprints}{args.blueprint}.pkl',  blueprint.TerrainGridBlueprint)
     except Exception:
-        blueprint = Blueprint.load_blueprint(f'{blueprints}{args.blueprint}.pkl',  Blueprint.BaseGridBlueprint)
+        blueprint = blueprint.load_blueprint(f'{blueprints}{args.blueprint}.pkl',  blueprint.BaseGridBlueprint)
     print('Success! Blueprint loaded.')
 else:
     if args.rows*args.columns > 1000000:
         print(f'{colorama.Fore.RED}WARNING{colorama.Fore.RESET}: The provided parameters will generate a grid composed of {colorama.Fore.LIGHTWHITE_EX}{round((args.rows*args.columns)/1000000, 1)} million{colorama.Fore.RESET} cells. \nThis will consume a significant amount of memory/resources/time. \nIf you have limited amount of memory this could cause your system to hang or crash. \nIf you understand the risks, continue by pressing {colorama.Fore.LIGHTGREEN_EX}ENTER{colorama.Fore.RESET}. Otherwise, press {colorama.Fore.LIGHTRED_EX}CTRL+C{colorama.Fore.RESET} to exit.')
         input()
     print(f'Generating blueprint with cell size {args.size}, {args.rows} rows and {args.columns} columns. Total_cells: {args.rows*args.columns} ...')
-    blueprint = Blueprint.TerrainGridBlueprint(cell_size=args.size, grid_dimensions=(args.columns*args.size, args.rows*args.size), noise_scale=args.noise_scale, noise_octaves=args.noise_octaves, noise_roughness=args.noise_roughness)
-    print(f'Success! Blueprint generated. Dimensions: {blueprint.grid_dimensions}')
+    bp = blueprint.TerrainGridBlueprint(cell_size=args.size, grid_dimensions=(args.columns*args.size, args.rows*args.size), noise_scale=args.noise_scale, noise_octaves=args.noise_octaves, noise_roughness=args.noise_roughness)
+    print(f'Success! Blueprint generated. Dimensions: {bp.grid_dimensions}')
 
 print('Building grid from blueprint ...')
-grid = Grid.Grid(blueprint=blueprint, with_terrain=True)
+g = grid.Grid(gblueprint=bp, with_terrain=True)
 print('Success! Grid generated.')
 
 if args.save:
     print('Pickling grid ...')
-    Grid.save_grid(grid=grid)
+    grid.save_grid(grid=g)
     print('Success!')
     print('Pickling blueprint ...')
-    Blueprint.save_blueprint(blueprint=blueprint)
+    blueprint.save_blueprint(blueprint=bp)
     print('Success!')
     
 if args.ascii:
     print('Writing ascii to file ...')
-    with open(f'{saves_dir}{grid.grid_id[-5:]}/grid.txt', 'w') as f:
+    with open(f'{saves_dir}{g.grid_id[-5:]}/grid.txt', 'w') as f:
         rows = []
         string = ''
         for row in grid.rows:
@@ -81,13 +81,13 @@ if args.ascii:
         f.write('\n'.join(rows))
     print('Success!')
     
-cdata = Grid.extract_cell_data(grid)
-cell_size = grid.cell_size
-grid_id = grid.grid_id[-5:]
-height = grid.blueprint.grid_height
-width = grid.blueprint.grid_width
+cdata = grid.extract_cell_data(g)
+cell_size = g.cell_size
+grid_id = g.grid_id[-5:]
+height = g.blueprint.grid_height
+width = g.blueprint.grid_width
 del blueprint
-del grid
+del g
 
 from grid_engine import _utility as utility
     

@@ -1,6 +1,8 @@
 from __future__ import annotations
 from collections import deque
 
+from .._grid_group import GridGroup
+
 import logging as _logging
 
 from abc import ABC
@@ -8,6 +10,7 @@ from typing import Optional as _Optional, Union as _Union
 import weakref
 import numpy as np
 import pyglet
+
 
 _ZONE_COLOR_MAP = {
         'regions' : (255, 0, 0, 255)
@@ -50,8 +53,6 @@ class CellEventMeta(type):
     def __new__(cls, name, bases, attrs):
         attrs['dispatcher'] = cls.dispatcher
         return type.__new__(cls, name, bases, attrs)
-    
-
 
 
 class AbstractCell(metaclass=type):
@@ -134,34 +135,34 @@ class AbstractCell(metaclass=type):
         if self.row == self.parentgrid.last_row or self.col == self.parentgrid.first_col:
             self._up_left = None
         else:
-            self._up_left = self.parentgrid[self.adjacent[2]]
+            self._up_left = self.parentgrid[self.adjacent[0]]
             # self._up_left = self.parentgrid.get_cell_by_position(self.x - self.size, self.y + self.size)
         return self._up_left
 
     @property
     def up(self):
         """Returns the cell adjacent in the up direction"""
-        if self.row == self.parentgrid.last_row:
+        if self.row == self.parentgrid.first_row:
             self._up = None
         else:
-            self._up = self.parentgrid[self.adjacent[3]]
+            self._up = self.parentgrid[self.adjacent[1]]
             # self._up = self.col[self.col.index(self)+1]
         return self._up
     
     @property
     def up_right(self):
         """Returns the cell adjacent in the up-right direction"""
-        if self.row == self.parentgrid.last_row or self.col == self.parentgrid.last_col:
+        if self.row == self.parentgrid.first_row or self.col == self.parentgrid.last_col:
             self._up_right = None
         else:
-            self._up_right = self.parentgrid[self.adjacent[4]]
+            self._up_right = self.parentgrid[self.adjacent[2]]
             # self._up_right = self.parentgrid.get_cell_by_position(self.x + self.size, self.y + self.size)
         return self._up_right
     
     @property
     def clearance_up(self):
         """Returns the number of cells in the up direction that are passable"""
-        if self.row == self.parentgrid.last_row:
+        if self.row == self.parentgrid.first_row:
             self._clearance_up = 0
         else:
             clearance = 0
@@ -179,37 +180,37 @@ class AbstractCell(metaclass=type):
     @property
     def down_right(self):
         """Returns the cell adjacent in the down-right direction"""
-        if self.row == self.parentgrid.first_row or self.col == self.parentgrid.last_col:
+        if self.row == self.parentgrid.last_row or self.col == self.parentgrid.last_col:
             self._down_right = None
         else:
-            self._down_right = self.parentgrid[self.adjacent[6]]
+            self._down_right = self.parentgrid[self.adjacent[4]]
             # self._down_right = self.parentgrid.get_cell_by_position(self.x + self.size, self.y - self.size)
         return self._down_right    
     
     @property
     def down(self):
         """Returns the cell adjacent in the down direction"""
-        if self.row == self.parentgrid.first_row:
+        if self.row == self.parentgrid.last_row:
             self._down = None
         else:
-            self._down = self.parentgrid[self.adjacent[7]]
+            self._down = self.parentgrid[self.adjacent[5]]
             # self._down = self.col[self.col.index(self) - 1]
         return self._down
 
     @property
     def down_left(self):
         """Returns the cell adjacent in the down-left direction"""
-        if self.row == self.parentgrid.first_row or self.col == self.parentgrid.first_col:
+        if self.row == self.parentgrid.last_row or self.col == self.parentgrid.first_col:
             self._down_left = None
         else:
-            self._down_left = self.parentgrid[self.adjacent[0]]
-            self._down_left = self.parentgrid.get_cell_by_position(self.x - self.size, self.y - self.size)
+            self._down_left = self.parentgrid[self.adjacent[6]]
+            # self._down_left = self.parentgrid.get_cell_by_position(self.x - self.size, self.y - self.size)
         return self._down_left
 
     @property
     def clearance_down(self):
         """Returns the number of cells in the down direction that are passable"""
-        if self.row == self.parentgrid.first_row:
+        if self.row == self.parentgrid.last_row:
             self._clearance_down = 0
         else:
             clearance = 0
@@ -234,7 +235,7 @@ class AbstractCell(metaclass=type):
         if self.col == self.parentgrid.first_col:
             self._left = None
         else:
-            self._left = self.parentgrid[self.adjacent[1]]
+            self._left = self.parentgrid[self.adjacent[7]]
             # self._left = self.row[self.row.index(self) - 1]
         return self._left
     
@@ -261,7 +262,7 @@ class AbstractCell(metaclass=type):
         if self.col == self.parentgrid.last_col:
             self._right = None
         else:
-            self._right = self.parentgrid[self.adjacent[5]]
+            self._right = self.parentgrid[self.adjacent[3]]
         return self._right
     
     @property
@@ -656,7 +657,7 @@ class Cell(AbstractCell, metaclass=CellEventMeta):
         Returns:
             GridGroup: The diagonal of the cell
         """
-        diagonal = GridGroup(self.parentgrid, f'{self.designation}_diagonal', [])
+        diagonal = []
         queue = deque([self])
         ys = [None, 'up', 'down']
         xs = [None, 'right', 'left']
@@ -665,8 +666,11 @@ class Cell(AbstractCell, metaclass=CellEventMeta):
         for _ in range(distance):
             current_cell = queue.popleft()
             cell = getattr(current_cell, f'{y}_{x}')
-            diagonal.add_cell(cell)
-            queue.append(cell)
+            if cell is not None:
+                diagonal.append(cell.designation)
+                queue.append(cell)
+            else:
+                break
         return diagonal
     
     def recv_occupant(self, occupant):
@@ -770,6 +774,7 @@ class Cell(AbstractCell, metaclass=CellEventMeta):
                 self.overlay = self.paint_overlay(batch=self.parentgrid.scene.batch_delegate.cell_batch)
             if hasattr(grid_object, 'passable'):
                 self.passable = grid_object.passable
+            
         
     def remove_object(self, grid_object):
         """Removes a GridObject from the cell. Updates the entry_object attribute. Also updates the grid array.
@@ -826,7 +831,9 @@ class Cell(AbstractCell, metaclass=CellEventMeta):
         if self.entry_unit[f'{utype}'][unit.name] is not None:
             self.entry_unit[f'{utype}'][unit.name] = None
             del self.entry_unit[f'{utype}'][unit.name]
-            self.parentgrid.dictUnit[self.col_index][self.row_index][2] = self.entry_unit
+        if self.entry_unit[f'{utype}'] == {}:
+            self.entry_unit[f'{utype}'] = None
+        self.parentgrid.dictUnit[self.col_index][self.row_index][2] = self.entry_unit
             
 
                     

@@ -42,10 +42,24 @@ def load_terrain() -> type[dict]:
 
     return terrain
 
+def load_objects() -> type[dict]:
+    """
+    Loads the object data from the objects.json file.
+    """
+    with open(f'{install_dir}/objects.json', 'r') as f:
+        objects = json.load(f)
+        
+    for k, v in objects['default'].items():
+        for ok, ov in v.items():
+            objects['default'][k][ok] = _COLORS[ov] if ok == 'color' else ov
+
+    return objects
+
 TERRAINS = load_terrain()
+OBJECTS = load_objects()
 
 DEFAULT_TERRAIN_DICT = TERRAINS['default']
-
+DEFAULT_OBJECT_DICT = OBJECTS['default']
 
 
 def initialize_grid(row_count, col_count):
@@ -228,12 +242,38 @@ def generate_terrain_dict(terrain_data_ds: type[np.ndarray], terrain_data_pn: ty
                 break
     return terrain_dict
 
+def generate_object_dict(object_data_ds: type[np.ndarray], object_data_pn: type[np.ndarray], cell_size: int, grid_dict: Dict[str, any]):
+    object_dict = {
+        cell: {'items': None, 'obstructions': None, 'structures': None, 'features': None, 'resources': None, 'containers': None, 'doors': None, 'traps': None, 'switches': None }
+    for cell in grid_dict
+    }
+    for cell, information in grid_dict.items():
+        r, f = information['row_index'], information['col_index']
+        x, y = information['coordinates']
+        object_pn_raw = object_data_pn[y // cell_size][x // cell_size]
+        object_ds_raw = object_data_ds[r, f]
+        object_raw = (object_pn_raw + object_ds_raw) / 1.5
+        for obj, info in DEFAULT_OBJECT_DICT.items():
+            if object_raw <= info['raw_max']:
+                if grid_dict[cell]['passable']:
+                    object_dict[cell][info['object_type']+'s'] = [] 
+                    object_dict[cell][info['object_type']+'s'].append(obj)
+                break
+    return object_dict
+            
 def process_noise(noise_scale: int, noise_octaves: int, noise_roughness: float, row_count: int, col_count: int, cell_size: int, grid_dict: Dict[str, any]):
     terrain_data_ds = diamond_square(noise_roughness, row_count, col_count)
     terrain_data_pn = perlin_noise(row_count, col_count, noise_scale, noise_octaves)
     return generate_terrain_dict(
         terrain_data_ds, terrain_data_pn, cell_size, grid_dict
     ) 
+
+def process_tree_noise(noise_scale: int, noise_octaves: int, noise_roughness: float, row_count: int, col_count: int, cell_size: int, grid_dict: Dict[str, any]):
+    tree_data_ds = diamond_square(noise_roughness, row_count, col_count)
+    tree_data_pn = perlin_noise(row_count, col_count, noise_scale, noise_octaves)
+    return generate_object_dict(
+        tree_data_ds, tree_data_pn, cell_size, grid_dict
+    )
     
 def process_edge_noise(noise_scale: int, noise_octaves: int, noise_roughness: float, row_count: int, col_count: int, cell_size: int, grid_dict: Dict[str, any], edge: tuple[tuple[str, int], list[float]]):
     terrain_data_ds = diamond_square_from_edge(noise_roughness, row_count, col_count, edge)
