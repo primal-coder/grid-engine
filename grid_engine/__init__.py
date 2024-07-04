@@ -2,6 +2,7 @@ from . import _grid as grid
 from . import _blueprint as blueprint
 from . import _cell as cell
 from . import _grid_object as grid_object
+# from . import _dungeon as dungeon
 
 def create_grid(cell_size=None, dimensions=None):
     if cell_size is None:

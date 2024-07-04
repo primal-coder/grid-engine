@@ -123,6 +123,7 @@ def get_cell_coordinates(cell_size: int, row_count: int, col_count: int) -> List
         # Output: [(0, 0), (10, 0), (20, 0), (30, 0), (0, 10), (10, 10), (20, 10), (30, 10), (0, 20), (10, 20), (20, 20), (30, 20)]
         ```
     """
+    print(f'Getting cell coordinates')
     return [
         (
             abs(0 - ((num % col_count) * cell_size)),
@@ -173,7 +174,8 @@ def get_grid_dict(cell_strings: List[str], row_strings: List[str], col_strings: 
             "col_index": col_strings.index(cell[-5:]),
             "coordinates": cell_coordinates[i],
             "quadrant_index": None,
-            "adjacent": []
+            "adjacent": [],
+            "passable": True
         } for i, cell in enumerate(cell_strings)
     }
     
@@ -269,6 +271,8 @@ def generate_adjacency(grid_dict: Dict[str, any], row_count: int, col_count: int
     h = row_count
     for cell, information in grid_dict.items():
         print(f'Progress: {information["cell_index"]}/{len(grid_dict)}', end='\r')
+        if information['cell_index'] == row_count * col_count - 1:
+            print('\nAdjacency generation complete.')
         n = information['cell_index']
         r = grid_dict[cell]['row_index']
         f = grid_dict[cell]['col_index']

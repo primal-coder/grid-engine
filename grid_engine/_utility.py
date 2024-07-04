@@ -2,6 +2,27 @@
 import os
 # Path: grid-engine/utility.py
 
+_COLORS = {
+    'OCEAN_BLUE': (16, 78, 139, 255),
+    'BARREN_BROWN': (77, 88, 77, 255),
+    'GRASS_GREEN': (84, 139, 84, 255),
+    'FOREST_GREEN': (55, 201, 99, 255),
+    'PLAIN_GREEN': (90, 154, 90, 255),
+    'FOOTHILL_GREEN': (82, 144, 78, 255),
+    'GULCH_GREEN': (74, 130, 70, 255),
+    'GULCH_GREY': (80, 110, 90, 255),
+    'BEACH_GREEN': (99, 170, 112, 255),
+    'SEASHELL_WHITE': (249, 235, 231, 255),
+    'SANDSTONE_GREY': (169, 169, 169, 255),
+    'SANDY_GREY': (188, 182, 134, 255),
+    'MOUND_GREY': (105, 105, 105, 255),
+    'BASIN_BROWN': (91, 101, 91, 255),
+    'BASE_GREY': (112, 128, 136, 255),
+    'SIDE_GREY': (79, 83, 72, 255),
+    'CRAG_GREY': (48, 42, 36, 255),
+    'SNOW_WHITE': (253, 245, 245, 255)
+}
+
 CWD = os.getcwd()
 if not os.path.exists(f'{CWD}/saves/'):
     os.mkdir(f'{CWD}/saves/')
@@ -68,6 +89,8 @@ def generate_images(dimensions, cdata, cell_size, grid_id, animate=False):
                     x, y = cell[0]
                     color = cell[1]
                     ctgry = cell[2]
+                    if isinstance(color, str):
+                        color = _COLORS[color]                        
                     draw.rectangle((x, y, x+cell_size, y+cell_size), fill=color if ctgry == category else (90, 154, 90, 255))
                 frames.append(image.copy())
         river_count = categories.count('RIVER')
@@ -84,23 +107,24 @@ def generate_images(dimensions, cdata, cell_size, grid_id, animate=False):
         grid_dir = get_grid_dir(grid_id)
         frames[0].save(f'{grid_dir}grid.gif', format='GIF', append_images=frames[1:], save_all=True, duration=0.001, loop=0)
         print(f'grid.gif saved to {grid_dir}.')
-        print('Press ')
-    else:
-        for i, cell in enumerate(cells):
-            print(f'Drawing cells         {round((i/total_cell_count)*100)}%', end='\r')
-            x = cell[0]
-            y = cell[1]
-            color = cell[2]
-            draw.rectangle((x, y, x+cell_size, y+cell_size), fill=color)
-        print('Cells drawn.                                   ')
-    print('Saving grid image ...')
+    for i, cell in enumerate(cells):
+        print(f'Drawing static image         {round((i/total_cell_count)*100)}%', end='\r')
+        x, y = cell[0]
+        color = cell[1]
+        draw.rectangle((x, y, x+cell_size, y+cell_size), fill=color)
+    print('Cells drawn.')
+    print('Saving static grid image ...')
     image.save(f'{grid_dir}grid.png')
     print(f'grid.png saved to {grid_dir}.')
-    
-    import matplotlib.pyplot as plt
-    
-    plt.imshow(image)
-    plt.show()   
+
+    print('Press ENTER to display the grid image using matplotlib.')
+    print('Press ctrl+C to exit.')
+    display = input()
+    if display == '':    
+        import matplotlib.pyplot as plt
+
+        plt.imshow(image)
+        plt.show()   
     
 # Define the QuietDict class
 

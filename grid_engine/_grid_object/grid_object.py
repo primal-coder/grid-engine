@@ -5,6 +5,10 @@ from uuid import uuid4
 
 
 class _AbstractGridObject(ABC):
+    """Abstract class for a grid object. A grid object is usually a physical item that exists on the grid.
+    A grid object can be a tree, a rock, a weapon, etc. A grid object is always associated with the cell in which it is located.
+    Each grid object may have a name, a reference to the grid and cell it is located in, a uniaue object id and an object type.
+    Most objects may have additional properties/methods that are specific to the object or its object type."""
     _object_id = None
     _name = None
     _grid = None
@@ -79,3 +83,4 @@ class _BaseGridObject(_AbstractGridObject):
 class GridObject(_BaseGridObject):
     def __init__(self, grid: Any, name: AnyStr, object_type: AnyStr, cell: Union[AnyStr, type(Cell)]  = None):
         super(GridObject, self).__init__(grid, name, object_type, cell)
+        

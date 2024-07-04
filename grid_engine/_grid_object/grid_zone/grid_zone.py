@@ -86,8 +86,9 @@ class GridZone(_BaseGridObject):
 
     def _add_zone_to_cells(self):
         for cell in self.cells:
-            if self.cells[cell].entry_zones[f'{self.zone_type}s'].get(self.name) is None:
-                self.cells[cell].add_zone(self) 
+            if self.cells[cell].entry_zone.get(f'{self.zone_type}s', None) is not None:
+                if self.cells[cell].entry_zone[f'{self.zone_type}s'].get(self.name, None) is None:
+                    self.cells[cell].add_zone(self) 
 
 
 class GridRegion(GridZone):

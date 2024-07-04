@@ -11,6 +11,11 @@ class Cell(ABC):
     pass
 
 class AbstractGridFeature(QuietDict, ABC):
+    """Abstract class for a grid feature. A grid feature is a collection of cells that share a common property or characteristic.
+    A grid feature differs from a grid group in that it is an implicit property of the grid, whereas a grid group is an explicit property of the grid.
+    A good example of a grid feature is a river, which is a collection of cells that share the property of being part of a river
+    or a mountain range, which is a collection of cells that share the property of being part of a mountain range."""
+    
     def __init__(self, grid: Grid, cells: List[Cell], title: str):
         self.grid = grid
         self.cells = cells

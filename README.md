@@ -1,36 +1,35 @@
-# grid-engine
+# grid_engine
 
 ## Description
 
-**gridengine** is a framework for generating and manipulating grids. It provides a number of classes and functions for generating and manipulating grids. Each grid is composed of [Cell](#Cell) objects and is defined by a [Blueprint](#Blueprint). A grid can be generated from a blueprint, loaded from a file, or created manually. It can also be pickled for later use. It can be rendered as a 2D image, an animated GIF or an ASCII string. Grids provide a number of relevant methods for pathfinding, cell manipulation, and more.
+**grid_engine** is a framework for generating and manipulating grids. It provides a number of classes and functions for generating and manipulating grids. Each grid is composed of [Cell](#Cell) objects and is defined by a [Blueprint](#Blueprint). A grid can be generated from a blueprint, loaded from a file, or created manually. It can also be pickled for later use. It can be rendered as a 2D image, an animated GIF or an ASCII string. Grids provide a number of relevant methods for pathfinding, cell manipulation, and more.
 
 ## Installation
 
-To install **gridengine**, run the following command:
+To install **grid_engine**, run the following command:
 
     ```bash
-    pip install grid_engine
+    pip install gridengine_framework
     ```
 
 ## Usage
 
-To use **gridengine** you can import any number of the submodules and utilize its respective features.
+To use **gridengine** you can import any number of the submodules and utilize its respective features or you can import the main module.
 
     ```python
-    import gridengine
-    from gridengine import grid
+    import grid_engine as ge
     
     # Create a grid
-    grid = grid.Grid(cell_size=10, grid_dimensions=(1000, 1000))
+    grid = ge.grid.Grid(cell_size=10, grid_dimensions=(1000, 1000))
     
     # Save a grid
-    grid.save_grid()
+    ge.grid.save_grid(grid)
     
     # Load a grid
-    loaded_grid = grid.Grid.load_grid(1)
+    loaded_grid = ge.grid.Grid.load_grid(1)
     ```
 
-grid-engine also provides a command line interface. To use it, run the following command:
+**grid_engine** also provides a command line interface. To use it, run the following command:
 
     ```bash
     python -m grid_engine --help
@@ -63,9 +62,9 @@ grid-engine also provides a command line interface. To use it, run the following
     #   -v, --verbose         Verbose output
     ```
 
-# Examples
+## Examples
 
-The following examples demonstrate the use of the grid-engine package.
+The following examples demonstrate the use of the **grid_engine** package.
 
 ### CLI
 
@@ -124,13 +123,14 @@ Will produce the following output:
 
 The following image is the result of the above command:
 
-![grid](grid_engine/_saves/8d564/grid.png)
+![grid](saves/cf1b9/grid.png)
+
 *The river generation algorithm is not perfect. I am currently working on improving it.*
 
 The above command will also produce the following files(Not included in the repository... That is, generate your own!):
 
-* `grid.8d564.pickle`: A pickled Grid object.
-* `blueprint.8d564.pickle`: A pickled TerrainGridBlueprint object.
+* `grid.cf1b9.pickle`: A pickled Grid object.
+* `blueprint.cf1b9.pickle`: A pickled TerrainGridBlueprint object.
 
     ```python
     import grid_engine

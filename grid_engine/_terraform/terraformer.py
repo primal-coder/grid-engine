@@ -11,6 +11,7 @@ RIVER_BLUE = (16, 78, 139, 255)
 RIVERBANK_SAND = (188, 182, 134, 255)
 RIVERBANK_GRASS = (105, 105, 105, 255)
 RIVERBANK_MOUND = (112, 128, 136, 255)
+FOREST_GREEN = (0, 155, 22, 255)
 
 class Cell(ABC):
     pass
@@ -53,11 +54,10 @@ class Terraformer(ABC):
     @_log_method
     def generate_realistic_river(self, start_cell: Cell, end_cell: Cell = None):
         # paths = self.get_river_bends(start_cell, end_cell)
-        print('Getting river cells by walk ...')
+        print('Generating river ...')
         path = self.get_river_by_walk(start_cell, end_cell)
         path = list(itertools.chain.from_iterable(path))
         path = [self.cells[cell] for cell in path]
-        print(f'River steps: {len(path)}')
         if path is not None:
             path = self.expand_river_path(path)
             step = 0
@@ -151,7 +151,6 @@ class Terraformer(ABC):
 
 
     def random_walk(self, river_cells: list[Cell,]):
-        print('Generating random river ...')
         for step in range(random.randint(199, 201)):
             current_cell = self.cells[river_cells[-1]]
             if adjacent_cells := [
@@ -171,7 +170,6 @@ class Terraformer(ABC):
         return river_cells
 
     def deliberate_walk(self, river_cells: list[Cell,], start_cell: Cell, end_cell: Cell):
-        print('Generating river with end designated ...')
         start_distance = self.grid.get_distance(start_cell, end_cell)
         current_distance = self.grid.get_distance(start_cell, end_cell)
         while current_distance > 1:
@@ -185,7 +183,6 @@ class Terraformer(ABC):
                 next_cell = adjacent_cells[direction]
             check_ = 0
             while self.grid.get_distance(next_cell, end_cell) > current_distance and check_  < 8:
-                print(f'Current distance: {current_distance} | Current cell: {current_cell.designation} | Next cell: {next_cell}', end='\r')
                 direction += 1
                 direction %= len(adjacent_cells)
                 check_ += 1
@@ -203,12 +200,10 @@ class Terraformer(ABC):
             river_cells = self.random_walk(river_cells)
         else:
             river_cells = self.deliberate_walk(river_cells, start_cell, end_cell)
-            print(f'Cells in river: {len(river_cells)}')
         return [river_cells]
         
     @_log_method
     def set_rivers(self, river_count):
-        print('Finding start to river ...')
         for river in range(river_count):
             if self.grid.river_count > 0 and not river % 3:
                 start: Cell = random.choice(self.grid.rivers[-1])
@@ -226,8 +221,6 @@ class Terraformer(ABC):
                     end: Cell = random.choice(lake_coastal_cells)
                 else:
                     end: Cell = random.choice(coast_cells)
-                print('Validating start/end of river ...')
-                print(f'Start cell: {start}, End cell: {end}', end = '\r')
                 while self.grid.get_distance(
                     start.designation, end.designation, 'cells'
                 ) < 100 or not [
@@ -237,43 +230,83 @@ class Terraformer(ABC):
                 ]:
                     start = random.choice(coast_cells)
                     end = random.choice(lake_coastal_cells) if lake_coastal_cells else random.choice(coast_cells)
-                    print(f'Start cell: {start}, End cell: {end}', end = '\r')
-            print(f'Start cell: {start}, End cell: {end}')
-            print('Building river ...')
             self.generate_realistic_river(start.designation, end.designation)
         riverbanks = self.get_river_banks()
         self.expand_riverbanks(riverbanks)
-        print('done')            
  
     def seed_forest(self):
         start_cell = self.grid.random_cell()
-        while start_cell.clearance_x < 10 or start_cell.clearance_y < 10:
+        while start_cell.clearance_left < 50 or start_cell.clearance_right < 50 or start_cell.clearance_up < 50 or start_cell.clearance_down < 50:
             start_cell = self.grid.random_cell()
         return start_cell
- 
-    def get_forest_borders(self, start_cells: Union[Cell, List[Cell]]):
-        forest_border_start = start_cells.get_diagonal(-1, -1, 5)[-1]
-        forest_border_step2 = start_cells.get_diagonal(-1, 1, 5)[-1]
-        forest_border_step3 = start_cells.get_diagonal(1, 1, 5)[-1]
-        forest_border_step4 = start_cells.get_diagonal(1, -1, 5)[-1]
+
+    def find_forest_points(self, start_cell: Cell):
+        forest_border_NW = self.grid[start_cell.get_diagonal(-1, -1, random.choice([10,12,16,20]))[-1]]
+        forest_border_NE = self.grid[start_cell.get_diagonal(-1, 1, random.choice([10,12,16,20]))[-1]]
+        forest_border_SE = self.grid[start_cell.get_diagonal(1, 1, random.choice([10,12,16,20]))[-1]]
+        forest_border_SW = self.grid[start_cell.get_diagonal(1, -1, random.choice([10,12,16,20]))[-1]]
+        return (forest_border_NW, forest_border_NE, forest_border_SE, forest_border_SW)
+        
+    def get_forest_borders(self, forest_points: Tuple[Cell, Cell, Cell, Cell]):
         forest_border = []
-        step1 = self.grid.get_walk(forest_border_start, forest_border_step2)
-        forest_border.extend(step1)
-        step2 = self.grid.get_walk(forest_border_step2, forest_border_step3)
-        forest_border.extend(step2)
-        step3 = self.grid.get_walk(forest_border_step3, forest_border_step4)
-        forest_border.extend(step3)
-        step4 = self.grid.get_walk(forest_border_step4, forest_border_start)
-        forest_border.extend(step4)
+        for step in range(4):
+            forest_step = self.grid.get_walk(forest_points[step], forest_points[(step+1)%4])
+            forest_border.extend(forest_step)
         return forest_border
+
+    def expand_forest_border(self, forest_border):
+        expanded_forest_border = []
+        for cell in forest_border:
+            cell = self.grid[cell]
+            for adjacent in cell.adjacent:
+                if adjacent is not None:
+                    adjacent = self.grid[adjacent]
+                    if adjacent.passable:
+                        expanded_forest_border.append(adjacent.designation)
+            expanded_forest_border.append(cell.designation)
+        return expanded_forest_border
+        
+    def get_most_distant_forest_border(self, forest_border, direction):
+        most_distant = None
+        for cell in forest_border:
+            cell = self.grid[cell]
+            if most_distant is None:
+                most_distant = cell
+            else:
+                if direction == 'N':
+                    if cell.y < most_distant.y:
+                        most_distant = cell
+                elif direction == 'S':
+                    if cell.y > most_distant.y:
+                        most_distant = cell
+                elif direction == 'E':
+                    if cell.x > most_distant.x:
+                        most_distant = cell
+                elif direction == 'W':
+                    if cell.x < most_distant.x:
+                        most_distant = cell
+        return most_distant
         
     def get_inner_forest_cells(self, start_cell, forest_border):
         for cell in forest_border:
-            self.grid[cell].passable = False
+            cell = self.grid[cell]
+            for adjacent in cell.adjacent:
+                if adjacent is not None:
+                    adjacent = self.grid[adjacent]
+                    adjacent.passable = False
+            cell.passable = False
         inner_forest_cells = start_cell.get_clearance_zone()
         inner_forest_cells = inner_forest_cells.cells
+        for cell in inner_forest_cells:
+            if cell in forest_border:
+                inner_forest_cells.remove(cell)
         for cell in forest_border:
-            self.grid[cell].passable = True
+            cell = self.grid[cell]
+            for adjacent in cell.adjacent:
+                if adjacent is not None:
+                    adjacent = self.grid[adjacent]
+                    adjacent.passable = True
+            cell.passable = True
         forest_cells = []
         forest_cells.extend(forest_border)
         for cell in inner_forest_cells:
@@ -281,15 +314,17 @@ class Terraformer(ABC):
         return forest_cells
     
     def set_forest(self):
-        start_cells = self.seed_forest()
-        forest_borders = self.get_forest_borders(start_cells)
-        forest_cells = self.get_inner_forest_cells(start_cells, forest_borders)
+        start_cell = self.seed_forest()
+        forest_points = self.find_forest_points(start_cell)
+        forest_borders = self.get_forest_borders(forest_points)
+        expanded_forest_borders = self.expand_forest_border(forest_borders)
+        forest_cells = self.get_inner_forest_cells(start_cell, expanded_forest_borders)
         for cell in forest_cells:
             cell = self.grid[cell]
             cell.terrain_str = 'FOREST'
             cell.terrain_raw = 0.0
             cell.terrain_int = 4
-            cell.terrain_color = 'GRASS_GREEN'
+            cell.terrain_color = FOREST_GREEN
             cell.terrain_char = '^'
             self.dictTerrain[cell.designation] = {
                 'str': cell.terrain_str, 
@@ -300,4 +335,3 @@ class Terraformer(ABC):
                 'cost_out': 2,
                 'char': '^'
                 }
-                   

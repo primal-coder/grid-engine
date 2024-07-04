@@ -1,4 +1,5 @@
 from __future__ import annotations as _annotations
+
 import random as _random
 
 import pyglet as _pyglet
@@ -54,13 +55,13 @@ def _get_vector_direction(pointa, pointb):
     angle_degrees %= 360
     cardinal_directions = {
             "East":       list(range(337, 360)) + list(range(23)) + [0],
-            "North-East": range(23, 68),
-            "North":      range(68, 113),
-            "North-West": range(113, 158),
+            "South-East": range(23, 68),
+            "South":      range(68, 113),
+            "South-West": range(113, 158),
             "West":       range(158, 203),
-            "South-West": range(203, 248),
-            "South":      range(248, 293),
-            "South-East": range(293, 338)
+            "North-West": range(203, 248),
+            "North":      range(248, 293),
+            "North-East": range(293, 338)
     }
     return next(
             (
@@ -871,7 +872,7 @@ class Grid(_AbstractGrid, _ABC):
         if isinstance(cella, _Cell):
             cella = cella.designation
         if isinstance(cellb, _Cell):
-            cellb = cella.designation
+            cellb = cellb.designation
         m = measurement if measurement is not None else "units"
         if m == "units":
             return self._heuristic(cella, cellb)
@@ -898,11 +899,16 @@ class Grid(_AbstractGrid, _ABC):
         for count, step in enumerate(path):
             if not self[step].passable:
                 path = path[:count]
+                cost = sum([self[step].cost_in + self[step].cost_out for step in path])
                 break
         return path, cost
 
     @_log_method
-    def get_walk(self, start_cell: _Optional[str] = None, end_cell: _Optional[str] = None):
+    def get_walk(self, start_cell: _Union[str, _Cell] = None, end_cell: _Union[str, _Cell] = None):
+        if isinstance(start_cell, _Cell):
+            start_cell = start_cell.designation
+        if isinstance(end_cell, _Cell):
+            end_cell = end_cell.designation
         walk_cells = [start_cell]
         if start_cell != end_cell:
             current_distance = self.get_distance(start_cell, end_cell, 'cells')

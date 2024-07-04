@@ -1,1 +1,1 @@
-from .cell import Cell
+from ._cell import Cell

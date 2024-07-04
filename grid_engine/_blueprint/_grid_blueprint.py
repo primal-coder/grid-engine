@@ -368,7 +368,7 @@ class BaseGridBlueprint(_AbstractGridBlueprint):
         self.array[:, :, 0] = self.dictGrid.values()
         if not self.with_terrain:
             self.dictTerrain = {
-                    cell: {'raw':  1, 'int': 1, 'str': 'GRASS', 'color': _COLORS['GRASS'], 'cost_in': 1, 'cost_out': 1,
+                    cell: {'raw':  1, 'int': 1, 'str': 'GRASS', 'color': _COLORS['GRASS_GREEN'], 'cost_in': 1, 'cost_out': 1,
                            'char': ''} for cell in self.cell_list}
 
     def _init_quadrants(self):

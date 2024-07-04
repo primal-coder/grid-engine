@@ -12,7 +12,9 @@ class Cell:
 
 class GridGroup(_ABC):
     """
-    A class to represent a group of cells on the grid.
+    A class to represent a group of cells on the grid. A grid group is a collection of cells that share a common property or characteristic.
+    The grid group is an explicit property of the grid, whereas a grid feature is an implicit property of the grid. A good example of a grid group
+    is an AoE spell, which is a collection of cells that are affected by the spell, or a village, town or city.
     """
 
     def __init__(self, grid: Grid, title: str, cells: list, legacy: bool = False):

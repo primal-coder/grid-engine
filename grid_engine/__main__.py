@@ -31,7 +31,7 @@ parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output
 
 args = parser.parse_args()
 
-saves_dir = f'{os.path.abspath(os.path.curdir)}grid_engine/_saves/'
+saves_dir = f'{os.path.abspath(os.path.curdir)}/saves/'
 
 if not args.verbose:
     def print(*args):
@@ -68,18 +68,7 @@ if args.save:
     blueprint.save_blueprint(blueprint=bp)
     print('Success!')
     
-if args.ascii:
-    print('Writing ascii to file ...')
-    with open(f'{saves_dir}{g.grid_id[-5:]}/grid.txt', 'w') as f:
-        rows = []
-        string = ''
-        for row in grid.rows:
-            for cell in row:
-                string += cell.terrain_char
-            rows.append(string)
-            string = ''
-        f.write('\n'.join(rows))
-    print('Success!')
+
     
 cdata = grid.extract_cell_data(g)
 cell_size = g.cell_size
@@ -87,10 +76,22 @@ grid_id = g.grid_id[-5:]
 height = g.blueprint.grid_height
 width = g.blueprint.grid_width
 del blueprint
-del g
 
 from grid_engine import _utility as utility
+        
+if args.ascii:
+    print('Writing ascii to file ...')
+    with open(f'{saves_dir}{grid_id}/grid.txt', 'w') as f:
+        rows = []
+        string = ''
+        for row in g.rows:
+            for cell in row:
+                string += cell.terrain_char
+            rows.append(string)
+            string = ''
+        f.write('\n'.join(rows))
+    print('Success!')
     
-utility.generate_images((width, height), cdata, cell_size, grid_id, animate=args.animate)
-    
+del g
 
+utility.generate_images((width, height), cdata, cell_size, grid_id, animate=args.animate)

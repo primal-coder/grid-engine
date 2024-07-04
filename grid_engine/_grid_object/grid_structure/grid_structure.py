@@ -71,3 +71,52 @@ class GridStructure(GridObject):
     def _destroy(self):
         self.cell.passable = True
         self.cell.remove_object(self)
+
+    def _repair(self, repair: int):
+        self._integrity += repair / self._maximum_integrity
+        if self._integrity >= 1:
+            self._integrity = 1
+            
+    def _construct(self, provided_material: AnyStr, material_quantity: int):
+        if self._construction_material == provided_material:
+            self._construction_progress += material_quantity
+            if self._construction_progress >= self._construction_cost:
+                self._under_construction = False
+                self._construction_progress = 100
+                self._integrity = 1.0
+                self.cell.passable = False
+                self.cell.add_object(self)
+            elif self._construction_progress < self._construction_cost:
+                self._under_construction = True
+        else:
+            return False
+        
+    def _deconstruct(self):
+        self._under_construction = False
+        self._construction_progress = 0
+        self.cell.passable = True
+        self.cell.remove_object(self)
+        
+        
+_STRUCTURE_DICT['wooden_wall'] = {
+    'construction_material': 'wood',
+    'construction_cost': 10,
+    'maximum_integrity': 100
+}
+
+_STRUCTURE_DICT['door'] = {
+    'construction_material': 'wood',
+    'construction_cost': 5,
+    'maximum_integrity': 50,
+    'passable': True
+}
+
+def build_wall(grid, cell):
+    wall = GridStructure.create(grid, 'wooden_wall', cell)
+    wall._construct('wood', 10)
+    return wall
+
+def build_door(grid, cell):
+    door = GridStructure.create(grid, 'door', cell)
+    door._construct('wood', 5)
+    return door

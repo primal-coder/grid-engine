@@ -11,6 +11,7 @@ _COLORS = {
     'OCEAN_BLUE': (16, 78, 139, 255),
     'BARREN_BROWN': (77, 88, 77, 255),
     'GRASS_GREEN': (84, 139, 84, 255),
+    'FOREST_GREEN': (55, 201, 99, 255),
     'PLAIN_GREEN': (90, 154, 90, 255),
     'FOOTHILL_GREEN': (82, 144, 78, 255),
     'GULCH_GREEN': (74, 130, 70, 255),
