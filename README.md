@@ -14,7 +14,7 @@ To install **grid_engine**, run the following command:
 
 ## Usage
 
-To use **gridengine** you can import any number of the submodules and utilize its respective features or you can import the main module.
+To use **grid_engine** you can import any number of the submodules and utilize its respective features or you can import the main module.
 
     ```python
     import grid_engine as ge
