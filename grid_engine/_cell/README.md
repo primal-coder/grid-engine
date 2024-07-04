@@ -1,6 +1,6 @@
 # Cell
 
-The Cell class is demonstrably the most important element of `grid-engine`. It is integral in the creation and interaction of the grid. The Cell class contains information which upon arrangement with other cells, can be used to create living world. Cells should never be instantiated directly, but rather through an instance of the `grid_engine.grid.Grid` object. Instances of Cell may then be accessed through said instance.
+The `Cell` class is demonstrably the most important element of `grid_engine`. It is integral in the creation and interaction of the `grid`. The `Cell` class contains information which upon arrangement with other cells, can be used to create a rich and detailed environment suitable for a number of different uses. Cells should never be instantiated directly, but rather through an instance of the `grid_engine.grid.Grid` class. Instances of `Cell` may then be accessed through said `Grid` object.
 
 ## Base Properties
 
@@ -59,7 +59,9 @@ The following properties are present in cell objects relating to terrain data:
 ## Tertiary Properties
 
 The following properties are related to the values stored in the `array` property. They are prefixed with the word `entry`.
-Accessing and modifying these properties will be reflected in the `array` property and vice versa. Most of these properties have convenient methods for accessing and modifying them. For example, the `add_object` method can be used to add an object to the cell, thereby modifying the `entry_object` property and the `array` property.
+Accessing and modifying these properties will be reflected in the `array` property and vice versa. Most of these properties 
+have convenient methods for accessing and modifying them. For example, the `add_object` method can be used to add an object 
+to the cell, thereby modifying the `entry_object` property and the `array` property.
 
 - `entry` (array): A dictionary containing the base properties of the cell. This includes the following properties:
   - `designation` (str)
