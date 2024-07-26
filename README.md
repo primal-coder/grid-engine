@@ -2,7 +2,7 @@
 
 ## Description
 
-**grid_engine** is a framework for generating and manipulating grids. It provides a number of classes and functions for generating and manipulating grids. Each grid is composed of [Cell](#Cell) objects and is defined by a [Blueprint](#Blueprint). A grid can be generated from a blueprint, loaded from a file, or created manually. It can also be pickled for later use. It can be rendered as a 2D image, an animated GIF or an ASCII string. Grids provide a number of relevant methods for pathfinding, cell manipulation, and more.
+**grid_engine** is a framework for generating and manipulating grids. It provides a number of classes and functions for generating and manipulating grids. Each grid is composed of [Cell](https://github.com/primal-coder/grid-engine/blob/main/grid_engine/_cell/README.md) objects and is defined by a [Blueprint](https://github.com/primal-coder/grid-engine/blob/main/grid_engine/_blueprint/README.md). A `Grid` can be generated from a `blueprint`, loaded from a file, or created manually. It can also be pickled for later use. It can be rendered as a 2D image, an animated GIF or an ASCII string. Grids provide a number of relevant methods for pathfinding, cell manipulation, and more.
 
 ## Installation
 
@@ -127,20 +127,20 @@ The following image is the result of the above command:
 
 *The river generation algorithm is not perfect. I am currently working on improving it.*
 
-The above command will also produce the following files(Not included in the repository... That is, generate your own!):
+The above command will also produce the following files(Not included in the repository... So, generate your own!):
 
-* `grid.cf1b9.pickle`: A pickled Grid object.
-* `blueprint.cf1b9.pickle`: A pickled TerrainGridBlueprint object.
+* `grid.8d564.pickle`: A pickled Grid object.
+* `blueprint.8d564.pickle`: A pickled TerrainGridBlueprint object.
 
     ```python
     import grid_engine
     from grid_engine import Grid
 
-    # Load the 8d564 grid(assuming you've not generated any other grids)
+    # Load the 8d564 grid
     _8d564 = Grid.load_grid('8d564')
 
     print(_8d564.grid_id)
-    # output: 'fb16965aa77f44138dd6149b823ee9e4'
+    # output: 'fb16965aa77f44138dd6149b8238d564'
 
     # Get a random cell
     cellA = _8d564.random_cell(attr=('passable', True))
