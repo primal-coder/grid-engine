@@ -2,7 +2,7 @@
 
 ## Description
 
-**grid_engine** is a framework for generating and manipulating grids. It provides a number of classes and functions for generating and manipulating grids. Each grid is composed of [Cell](https://github.com/primal-coder/grid-engine/blob/main/grid_engine/_cell/README.md) objects and is defined by a [Blueprint](https://github.com/primal-coder/grid-engine/blob/main/grid_engine/_blueprint/README.md). A `Grid` can be generated from a `blueprint`, loaded from a file, or created manually. It can also be pickled for later use. It can be rendered as a 2D image, an animated GIF or an ASCII string. Grids provide a number of relevant methods for pathfinding, cell manipulation, and more.
+**grid_engine** is a framework for generating and manipulating grids. It provides a number of classes and functions to accomplish this. Each grid is composed of [Cell](https://github.com/primal-coder/grid-engine/blob/main/grid_engine/_cell/README.md) objects and is defined by a [Blueprint](https://github.com/primal-coder/grid-engine/blob/main/grid_engine/_blueprint/README.md). A `Grid` can be generated from a `blueprint`, loaded from a file, or created manually. It can also be pickled for later use. It can be rendered as a 2D image, an animated GIF or an ASCII string. Grids provide a number of relevant methods for pathfinding, cell manipulation, and more.
 
 ## Installation
 
